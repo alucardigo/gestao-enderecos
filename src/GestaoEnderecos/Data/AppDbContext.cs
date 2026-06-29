@@ -30,6 +30,7 @@ public class AppDbContext : DbContext
             e.Property(u => u.Nome).HasMaxLength(120).IsRequired();
             e.Property(u => u.Login).HasColumnName("Usuario").HasMaxLength(60).IsRequired();
             e.Property(u => u.SenhaHash).HasMaxLength(256).IsRequired();
+            e.Property(u => u.IsAdmin).HasDefaultValue(false);
             // Login único: o banco é a última linha de defesa contra contas duplicadas.
             e.HasIndex(u => u.Login).IsUnique().HasDatabaseName("UX_Usuarios_Usuario");
         });

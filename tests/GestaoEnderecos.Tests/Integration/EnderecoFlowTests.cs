@@ -121,6 +121,46 @@ public class EnderecoFlowTests : IClassFixture<GestaoWebAppFactory>
     }
 
     [Fact]
+    public async Task Modelo_de_importacao_baixa_csv_com_cabecalho()
+    {
+        var client = await ClientAutenticadoAsync();
+
+        var resp = await client.GetAsync("/Enderecos/ModeloImportacao");
+
+        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+        Assert.Equal("text/csv", resp.Content.Headers.ContentType?.MediaType);
+        Assert.Contains("CEP,Logradouro,Número,Complemento,Bairro,Cidade,UF",
+            await resp.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Exportacao_e_reimportavel_sem_rejeicoes_round_trip()
+    {
+        var client = await ClientAutenticadoAsync("bruno"); // bruno tem 1 endereço (seed)
+
+        var export = await client.GetAsync("/Enderecos/Exportar");
+        Assert.Equal(HttpStatusCode.OK, export.StatusCode);
+        Assert.Equal("text/csv", export.Content.Headers.ContentType?.MediaType);
+        var csv = await export.Content.ReadAsStringAsync();
+
+        // Reimporta o CSV exportado: deve entrar 100%, sem rejeições (formato compatível).
+        var form = await client.GetAsync("/Enderecos/Importar");
+        var token = HtmlHelpers.ExtractAntiForgeryToken(await form.Content.ReadAsStringAsync());
+        using var content = new MultipartFormDataContent();
+        var arquivo = new ByteArrayContent(Encoding.UTF8.GetBytes(csv));
+        arquivo.Headers.ContentType = new MediaTypeHeaderValue("text/csv");
+        content.Add(arquivo, "arquivo", "export.csv");
+        content.Add(new StringContent(token), "__RequestVerificationToken");
+
+        var resp = await client.PostAsync("/Enderecos/Importar", content);
+
+        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+        var html = await resp.Content.ReadAsStringAsync();
+        Assert.Contains("importado", html, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("rejeitada", html, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task Importa_csv_via_http_com_validos_e_invalidos()
     {
         var client = await ClientAutenticadoAsync("bruno");

@@ -20,10 +20,10 @@ public static class DbSeeder
             return;
         }
 
-        var ana = new Usuario { Nome = "Ana Souza", Login = "ana" };
+        var ana = new Usuario { Nome = "Ana Souza", Login = "ana", IsAdmin = true };
         ana.SenhaHash = hasher.HashPassword(ana, SenhaDemo);
 
-        var bruno = new Usuario { Nome = "Bruno Lima", Login = "bruno" };
+        var bruno = new Usuario { Nome = "Bruno Lima", Login = "bruno", IsAdmin = false };
         bruno.SenhaHash = hasher.HashPassword(bruno, SenhaDemo);
 
         db.Usuarios.AddRange(ana, bruno);

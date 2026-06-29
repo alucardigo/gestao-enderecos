@@ -38,6 +38,7 @@ BEGIN
         Nome      NVARCHAR(120)  NOT NULL,
         Usuario   NVARCHAR(60)   NOT NULL,
         SenhaHash NVARCHAR(256)  NOT NULL,   -- coluna "senha" da spec, guardando o hash
+        IsAdmin   BIT            NOT NULL CONSTRAINT DF_Usuarios_IsAdmin DEFAULT(0),  -- extra: papel admin
 
         CONSTRAINT PK_Usuarios PRIMARY KEY CLUSTERED (Id)
     );

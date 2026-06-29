@@ -1,0 +1,40 @@
+@model PerfilViewModel
+@{
+    ViewData["Title"] = "Minha conta";
+}
+
+@if (TempData["Sucesso"] is string sucesso)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @sucesso
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<h1 class="h3 mb-3">Minha conta</h1>
+
+<div class="row">
+    <div class="col-12 col-md-6">
+        <form asp-action="Perfil" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+            <div class="mb-3">
+                <label asp-for="Login" class="form-label"></label>
+                <input asp-for="Login" class="form-control" readonly />
+                <div class="form-text">O usuário (login) não pode ser alterado.</div>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Nome" class="form-label"></label>
+                <input asp-for="Nome" class="form-control" />
+                <span asp-validation-for="Nome" class="text-danger small"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a asp-action="AlterarSenha" class="btn btn-link">Alterar senha</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

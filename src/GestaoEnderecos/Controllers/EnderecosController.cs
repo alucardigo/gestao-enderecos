@@ -57,6 +57,14 @@ public class EnderecosController : Controller
     [HttpGet]
     public IActionResult Importar() => View();
 
+    /// <summary>Modelo de planilha de importação (cabeçalho + exemplos) para o usuário baixar.</summary>
+    [HttpGet]
+    public IActionResult ModeloImportacao()
+    {
+        var conteudo = _csv.GerarModeloImportacao();
+        return File(conteudo, "text/csv", "modelo-importacao-enderecos.csv");
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequestSizeLimit(50_000_000)]

@@ -39,6 +39,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 builder.Services.AddScoped<AutenticacaoService>();
+builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<EnderecoService>();
 builder.Services.AddScoped<EnderecoImportService>();
 builder.Services.AddSingleton<CsvExporter>();

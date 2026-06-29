@@ -52,6 +52,22 @@ public sealed class CsvExporter
         return memoria.ToArray();
     }
 
+    /// <summary>Modelo de planilha para importação: mesmo cabeçalho do export + 2 linhas de exemplo.</summary>
+    public byte[] GerarModeloImportacao() =>
+        Exportar(
+        [
+            new Endereco
+            {
+                Cep = "01001000", Logradouro = "Praça da Sé", Numero = "100",
+                Complemento = "", Bairro = "Sé", Cidade = "São Paulo", Uf = "SP",
+            },
+            new Endereco
+            {
+                Cep = "20040002", Logradouro = "Rua da Assembleia", Numero = "50",
+                Complemento = "Sala 2", Bairro = "Centro", Cidade = "Rio de Janeiro", Uf = "RJ",
+            },
+        ]);
+
     private static string FormatarCep(string? cep) =>
         cep is { Length: 8 } ? $"{cep[..5]}-{cep[5..]}" : cep ?? string.Empty;
 }

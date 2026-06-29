@@ -1,0 +1,50 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Criar conta";
+}
+
+<div class="row justify-content-center mt-4 mt-md-5">
+    <div class="col-12 col-sm-9 col-md-6 col-lg-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4 p-md-5">
+                <h1 class="h4 mb-1 text-center">Criar conta</h1>
+                <p class="text-muted text-center small mb-4">Leva menos de um minuto</p>
+
+                <form asp-action="Register" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Nome" class="form-control" placeholder="nome" autofocus />
+                        <label asp-for="Nome"></label>
+                        <span asp-validation-for="Nome" class="text-danger small"></span>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="Login" class="form-control" placeholder="usuário" autocomplete="username" />
+                        <label asp-for="Login"></label>
+                        <span asp-validation-for="Login" class="text-danger small"></span>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="Senha" class="form-control" placeholder="senha" autocomplete="new-password" />
+                        <label asp-for="Senha"></label>
+                        <span asp-validation-for="Senha" class="text-danger small"></span>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="ConfirmarSenha" class="form-control" placeholder="confirmar" autocomplete="new-password" />
+                        <label asp-for="ConfirmarSenha"></label>
+                        <span asp-validation-for="ConfirmarSenha" class="text-danger small"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Criar conta</button>
+                </form>
+
+                <p class="text-center small mt-4 mb-0">
+                    Já tem conta? <a asp-action="Login">Entrar</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
