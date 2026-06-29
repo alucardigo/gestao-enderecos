@@ -15,12 +15,30 @@ namespace GestaoEnderecos.Controllers;
 public class EnderecosController : Controller
 {
     private readonly EnderecoService _service;
+    private readonly IViaCepService _viaCep;
 
-    public EnderecosController(EnderecoService service) => _service = service;
+    public EnderecosController(EnderecoService service, IViaCepService viaCep)
+    {
+        _service = service;
+        _viaCep = viaCep;
+    }
 
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken ct) =>
         View(await _service.ListarAsync(ct));
+
+    /// <summary>
+    /// Proxy interno para o ViaCEP: o JS do formulário chama esta rota; o servidor é quem
+    /// consulta a API externa, normaliza e trata falhas. Devolve JSON simples.
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> BuscarCep(string cep, CancellationToken ct)
+    {
+        var endereco = await _viaCep.BuscarAsync(cep, ct);
+        return endereco is null
+            ? NotFound(new { mensagem = "CEP não encontrado. Preencha manualmente." })
+            : Ok(endereco);
+    }
 
     [HttpGet]
     public IActionResult Create() => View(new EnderecoFormViewModel());

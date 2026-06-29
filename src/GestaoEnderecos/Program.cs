@@ -28,6 +28,13 @@ builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 builder.Services.AddScoped<AutenticacaoService>();
 builder.Services.AddScoped<EnderecoService>();
 
+// Cliente HTTP tipado para o ViaCEP (pool de conexões via IHttpClientFactory + timeout curto).
+builder.Services.AddHttpClient<IViaCepService, ViaCepService>(client =>
+{
+    client.BaseAddress = new Uri("https://viacep.com.br/");
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
+
 // Autenticação por cookie (sem ASP.NET Core Identity).
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
