@@ -1,5 +1,6 @@
 using GestaoEnderecos.Data;
 using GestaoEnderecos.Models;
+using GestaoEnderecos.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -28,6 +29,10 @@ public class GestaoWebAppFactory : WebApplicationFactory<Program>
             services.RemoveAll<DbContextOptions<AppDbContext>>();
             services.RemoveAll<AppDbContext>();
             services.AddDbContext<AppDbContext>(options => options.UseSqlite(_connection));
+
+            // ViaCEP falso — testes de integração não tocam a rede.
+            services.RemoveAll<IViaCepService>();
+            services.AddSingleton<IViaCepService, FakeViaCepService>();
         });
     }
 

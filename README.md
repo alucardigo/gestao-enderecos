@@ -1,60 +1,95 @@
 # Gestão de Endereços
 
-Aplicação web em **C# / ASP.NET Core MVC** para o teste técnico de desenvolvedor.
-Permite **login**, **gerenciar um CRUD de endereços** (cadastro manual ou **autopreenchimento por
-CEP via API do [ViaCEP](https://viacep.com.br/)**) e **exportar os endereços para CSV**.
+Aplicação web em **C# / ASP.NET Core MVC** para o teste técnico de desenvolvedor. Permite
+**login**, **gerenciar um CRUD de endereços** (cadastro manual ou **autopreenchimento por CEP via
+[ViaCEP](https://viacep.com.br/)**) e **exportar os endereços para CSV**.
 
-> Implementa exatamente o escopo proposto pela avaliação — robusto, sem *overengineering*.
-> O objetivo é um código que um sênior reconheça pela qualidade e um júnior leia sem esforço.
+Implementa exatamente o escopo proposto — robusto, sem *overengineering*. A meta é um código que um
+sênior reconheça pela qualidade e um júnior leia sem esforço.
 
 ## Stack
-- **.NET 8 LTS** · ASP.NET Core **MVC** · Razor Views
+- **.NET 8 LTS** · ASP.NET Core **MVC** (Razor)
 - **Entity Framework Core 8** (Code-First) · **SQL Server**
-- **Bootstrap 5** · JavaScript *vanilla* (sem framework de front)
+- **Bootstrap 5** · **JavaScript vanilla** (sem framework de front)
 - Testes: **xUnit** · **Moq** · **SQLite in-memory** · `WebApplicationFactory`
 
-> *Nota:* a sugestão "ASP.NET MVC" do enunciado foi interpretada como **ASP.NET Core MVC (.NET 8 LTS)**,
+> A sugestão "ASP.NET MVC" do enunciado foi interpretada como **ASP.NET Core MVC (.NET 8 LTS)**,
 > o padrão atual e suportado.
 
 ## Como rodar
-Pré-requisitos: **.NET 8 SDK** e uma instância de **SQL Server** (LocalDB, Express ou container).
+Pré-requisitos: **.NET 8 SDK** e **SQL Server** (LocalDB, Express ou container).
 
 ```bash
-# 1. Configurar a connection string (NUNCA commitar segredos — use User-Secrets)
+# 1. (Opcional) ajustar a connection string — o padrão usa LocalDB.
+#    Em outro servidor, prefira User-Secrets (nunca commitar segredos):
 cd src/GestaoEnderecos
 dotnet user-secrets init
-dotnet user-secrets set "ConnectionStrings:Default" "Server=(localdb)\\MSSQLLocalDB;Database=GestaoEnderecos;Trusted_Connection=True;TrustServerCertificate=True"
+dotnet user-secrets set "ConnectionStrings:Default" "Server=SEU_SERVIDOR;Database=GestaoEnderecos;User Id=...;Password=...;TrustServerCertificate=True"
 
-# 2. Criar o banco — opção A: aplicar o script DDL
-#    Execute db/scripts/01-create-tables.sql no seu SQL Server.
-#    (opção B, em desenvolvimento: dotnet ef database update)
-
-# 3. Rodar
+# 2. Rodar
 dotnet run
 ```
-A aplicação sobe, popula usuários de demonstração (*seed*) e abre na tela de login.
+
+Na primeira execução a aplicação **cria o schema e popula dois usuários de demonstração**
+automaticamente. Como alternativa ao passo automático, o schema pode ser criado pelo script
+[`db/scripts/01-create-tables.sql`](db/scripts/01-create-tables.sql).
+
+### Credenciais de demonstração
+Dois usuários (para você ver o **isolamento de dados** funcionando entre contas):
+
+| Usuário | Senha       |
+|---------|-------------|
+| `ana`   | `Senha@123` |
+| `bruno` | `Senha@123` |
 
 ## Testes
 ```bash
 dotnet test
 ```
+São **36 testes** cirúrgicos cobrindo o que tem risco real: hashing de senha, normalização de
+CEP, integração ViaCEP (sucesso, CEP inexistente, timeout/erro), geração de CSV (escaping/BOM),
+**isolamento entre usuários (leitura e escrita)** e o **fluxo autenticado ponta a ponta**
+(login → criar → listar → exportar) via `WebApplicationFactory`.
 
 ## Banco de dados
 O script de criação das tabelas (entregável do teste) está em
-[`db/scripts/01-create-tables.sql`](db/scripts/01-create-tables.sql).
+[`db/scripts/01-create-tables.sql`](db/scripts/01-create-tables.sql). É a fonte de verdade
+entregue; o EF Core Code-First é usado no desenvolvimento.
 
-## Decisões de arquitetura (resumo)
+## Estrutura
+```
+src/GestaoEnderecos/      Aplicação MVC
+  Controllers/            Account (login), Enderecos (CRUD + CEP + CSV), Home (erros)
+  Services/               AutenticacaoService, EnderecoService, ViaCepService, CsvExporter
+  Data/                   AppDbContext (+ filtro global), CurrentUser, DbSeeder
+  Models/ ViewModels/ Views/ wwwroot/
+tests/GestaoEnderecos.Tests/  Unit + Integration
+db/scripts/               DDL das tabelas
+```
+
+## Decisões de arquitetura
 - **Monólito bem organizado** (um projeto MVC, pastas por responsabilidade) em vez de Clean
-  Architecture multi-projeto: o EF Core já é o repositório; abstrair por cima seria cerimônia.
-- **`PasswordHasher` nativo** (PBKDF2, shared framework) — segurança sem reinventar criptografia.
-- **Isolamento por usuário** via *EF Global Query Filter*: um usuário nunca enxerga endereço de
-  outro, por construção (não por disciplina).
-- **ViaCEP por endpoint interno** (typed `HttpClient`, async, *timeout*) com degradação graciosa.
-- **CSV com CsvHelper** (UTF-8 com BOM) — mesma régua de "não reinventar o resolvido".
+  Architecture multi-projeto: para duas entidades e uma integração, o EF Core já é o repositório;
+  abstrair por cima seria cerimônia que esconde o código.
+- **`PasswordHasher` nativo** (PBKDF2, do *shared framework* — sem o ASP.NET Core Identity completo):
+  segurança correta sem reinventar criptografia.
+- **Isolamento por usuário via *EF Global Query Filter***: nenhuma consulta enxerga endereço de
+  outro usuário — inclusive em editar/excluir — tornando o vazamento (IDOR) impossível por
+  construção, não por disciplina.
+- **ViaCEP por endpoint interno** (typed `HttpClient`, async, *timeout* 5s) com degradação graciosa:
+  se a API falhar, o cadastro manual continua possível.
+- **CSV com CsvHelper** (UTF-8 com BOM para o Excel pt-BR): mesma régua de "não reinventar o que
+  já está resolvido".
+- **Erros**: página amigável em produção (`UseExceptionHandler`) + `UseStatusCodePagesWithReExecute`
+  para 404; em desenvolvimento, a página detalhada do framework.
 
 ## O que ficou de fora (de propósito)
-Cadastro self-service de usuário (usuários nascem por *seed*; o enunciado pede apenas login),
+Cadastro self-service de usuário (o enunciado pede apenas login; usuários nascem por *seed*),
 recuperação de senha, busca/paginação, Polly/circuit-breaker, Docker. Foco no escopo pedido.
 
 > Isolamento de dados e proteção de rota são decisões de engenharia derivadas dos critérios de
 > **segurança** da avaliação, não exigências textuais do enunciado.
+
+## Convenções de commit
+Um commit por funcionalidade (login, CRUD, ViaCEP, CSV), além de commits de suporte (scaffold,
+docs). O histórico conta a construção do produto.

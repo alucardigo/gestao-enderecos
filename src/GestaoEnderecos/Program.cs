@@ -59,6 +59,9 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// Páginas amigáveis para códigos de status (ex.: 404 ao acessar id inexistente/alheio).
+app.UseStatusCodePagesWithReExecute("/Home/Status/{0}");
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 

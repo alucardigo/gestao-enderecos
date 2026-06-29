@@ -4,28 +4,17 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GestaoEnderecos.Controllers;
 
+/// <summary>Páginas de erro amigáveis (exceções não tratadas e códigos de status HTTP).</summary>
 public class HomeController : Controller
 {
-    private readonly ILogger<HomeController> _logger;
-
-    public HomeController(ILogger<HomeController> logger)
-    {
-        _logger = logger;
-    }
-
-    public IActionResult Index()
-    {
-        return View();
-    }
-
-    public IActionResult Privacy()
-    {
-        return View();
-    }
-
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
+    public IActionResult Error() =>
+        View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+
+    /// <summary>Página amigável para códigos de status (ex.: 404), via StatusCodePages.</summary>
+    public IActionResult Status(int code)
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        ViewData["Codigo"] = code;
+        return View();
     }
 }

@@ -1,0 +1,12 @@
+@{
+    ViewData["Title"] = "Ops";
+    var codigo = ViewData["Codigo"] as int? ?? 0;
+    var mensagem = codigo == 404
+        ? "Página ou recurso não encontrado."
+        : "Ocorreu um problema ao processar sua solicitação.";
+}
+<div class="text-center mt-5">
+    <h1 class="display-5">@codigo</h1>
+    <p class="text-muted">@mensagem</p>
+    <a class="btn btn-primary" asp-controller="Enderecos" asp-action="Index">Voltar ao início</a>
+</div>
