@@ -29,8 +29,8 @@ public class EnderecosController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(string? q, int pagina, CancellationToken ct) =>
-        View(await _service.ListarPaginadoAsync(q, pagina, tamanho: 10, ct));
+    public async Task<IActionResult> Index(string? q, int pagina = 1, CancellationToken ct = default) =>
+        View(await _service.ListarPaginadoAsync(q, pagina, EnderecoService.TamanhoPaginaPadrao, ct));
 
     /// <summary>
     /// Proxy interno para o ViaCEP: o JS do formulário chama esta rota; o servidor é quem

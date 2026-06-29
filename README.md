@@ -8,12 +8,14 @@ importação por planilha e busca tolerante, mantendo o código limpo e legível
 ## 🌐 Demo ao vivo
 **http://129.151.35.75:8080** — entre com **`ana`** (administrador) ou **`bruno`** · senha `Senha@123`.
 
-> A demo roda em uma instância Oracle Cloud (ARM) como serviço `systemd`, usando **SQLite** por
-> simplicidade/custo. O repositório e o `docker-compose` usam **SQL Server** (provider selecionável
-> por configuração — `Database:Provider`), mantendo a entrega fiel ao enunciado.
+> A demo roda em **duas instâncias Oracle Cloud na mesma rede privada**: a aplicação (ASP.NET Core,
+> serviço `systemd`) numa instância ARM e o banco **SQL Server** (Azure SQL Edge — o mesmo motor)
+> numa instância x86, acessível **apenas pela rede interna** (porta 1433 não exposta à internet). O
+> provider é selecionável por configuração (`Database:Provider`); o `docker-compose` sobe **SQL
+> Server 2022** para rodar localmente, e **SQLite** está disponível para um clone sem dependências.
 
 ## Funcionalidades
-- **Autenticação** por cookie + **cadastro** de conta (auto-serviço).
+- **Autenticação** por cookie. Novas contas são criadas **apenas pelo administrador** (sem autocadastro).
 - **CRUD de endereços** por usuário, com **isolamento de dados** garantido por construção.
 - **Autopreenchimento por CEP** (ViaCEP, com *cache* e degradação graciosa).
 - **Busca tolerante** — ignora **maiúsculas e acentos** e tolera **erros de digitação**
@@ -41,6 +43,7 @@ importação por planilha e busca tolerante, mantendo o código limpo e legível
 - **[Defesa técnica (estilo TCC) — PDF](docs/TCC_DEFESA_TECNICA.pdf)** · [versão Markdown](docs/TCC_DEFESA_TECNICA.md)
   — atendimento requisito a requisito, segurança, escalabilidade, uso de IA e roadmap.
 - **[Dossiê resumido — PDF](docs/DOSSIE_AVALIADOR.pdf)** · [Markdown](docs/DOSSIE_AVALIADOR.md)
+- **[Ambiente produtivo na Oracle Cloud](docs/INFRA-OCI.md)** — app + SQL Server (Azure SQL Edge) em rede privada
 - **Planejamento:** [requisitos](docs/planejamento/00-requisitos-originais.md) ·
   [plano diretor](docs/planejamento/01-plano-diretor.md) ·
   [ADRs](docs/planejamento/02-decisoes-arquiteturais-adr.md) ·
