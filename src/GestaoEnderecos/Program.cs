@@ -18,9 +18,22 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<WebEncoderOptions>(options =>
     options.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All));
 
-// Persistência (EF Core + SQL Server). Connection string via appsettings/User-Secrets/env.
+// Persistência (EF Core). Provider configurável: SQL Server (padrão) ou SQLite. O SQLite é útil
+// para ambientes leves/demos (ex.: hosts ARM, onde não há imagem de SQL Server) sem mudar o código.
+// Connection string via appsettings/User-Secrets/variável de ambiente.
+var dbProvider = builder.Configuration.GetValue<string>("Database:Provider") ?? "SqlServer";
+var connectionString = builder.Configuration.GetConnectionString("Default");
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+{
+    if (string.Equals(dbProvider, "Sqlite", StringComparison.OrdinalIgnoreCase))
+    {
+        options.UseSqlite(connectionString);
+    }
+    else
+    {
+        options.UseSqlServer(connectionString);
+    }
+});
 
 // Usuário atual (Scoped) + hash de senha nativo (PBKDF2 do framework) + serviços de domínio.
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
