@@ -32,6 +32,14 @@ sênior reconheça pela qualidade e um júnior leia sem esforço.
 
 ![Importação](docs/screenshots/08-import-relatorio.png)
 
+| Menu do usuário | Área administrativa de usuários |
+|-----------------|--------------------------------|
+| ![Menu](docs/screenshots/10-menu-usuario.png) | ![Admin](docs/screenshots/11-admin-usuarios.png) |
+
+**Listagem com busca e paginação (em escala)**
+
+![Paginação](docs/screenshots/13-paginacao.png)
+
 ## Stack
 - **.NET 8 LTS** · ASP.NET Core **MVC** (Razor)
 - **Entity Framework Core 8** (Code-First) · **SQL Server**
