@@ -14,6 +14,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3 mb-0">Seus endereços</h1>
     <div class="d-flex gap-2">
+        <a asp-action="Importar" class="btn btn-outline-secondary">⬆ Importar CSV</a>
         @if (Model.Count > 0)
         {
             <a asp-action="Exportar" class="btn btn-outline-secondary">⬇ Exportar CSV</a>

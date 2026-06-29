@@ -1,0 +1,63 @@
+@model GestaoEnderecos.Services.ImportResult
+@{
+    ViewData["Title"] = "Importar endereços";
+}
+
+<h1 class="h3 mb-3">Importar endereços (CSV)</h1>
+
+<form asp-action="Importar" method="post" enctype="multipart/form-data" class="mb-4">
+    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+    <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-7">
+            <label class="form-label" for="arquivo">Arquivo CSV</label>
+            <input class="form-control" type="file" id="arquivo" name="arquivo" accept=".csv,text/csv" />
+            <div class="form-text">
+                Colunas: <code>CEP, Logradouro, Número, Complemento, Bairro, Cidade, UF</code>.
+                Linhas inválidas são reportadas e ignoradas; as válidas são importadas.
+            </div>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Importar</button>
+        </div>
+        <div class="col-auto">
+            <a asp-action="Index" class="btn btn-link">Voltar</a>
+        </div>
+    </div>
+</form>
+
+@if (Model is not null)
+{
+    <div class="alert @(Model.Rejeitados == 0 ? "alert-success" : "alert-warning")">
+        <strong>@Model.Importados</strong> importado(s) de <strong>@Model.TotalLinhas</strong> linha(s).
+        @if (Model.Rejeitados > 0)
+        {
+            <text> <strong>@Model.Rejeitados</strong> rejeitada(s).</text>
+        }
+    </div>
+
+    @if (Model.Erros.Count > 0)
+    {
+        <h2 class="h5">Linhas rejeitadas</h2>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th style="width:100px">Linha</th>
+                        <th>Motivo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var erro in Model.Erros)
+                    {
+                        <tr>
+                            <td>@erro.Linha</td>
+                            <td>@erro.Mensagem</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <a asp-action="Index" class="btn btn-primary mt-2">Ver endereços</a>
+}

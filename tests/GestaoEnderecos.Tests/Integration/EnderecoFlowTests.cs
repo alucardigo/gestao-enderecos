@@ -1,4 +1,6 @@
 using System.Net;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.RegularExpressions;
 using GestaoEnderecos.Tests.TestSupport;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -116,6 +118,37 @@ public class EnderecoFlowTests : IClassFixture<GestaoWebAppFactory>
         var resposta = await client.GetAsync("/Enderecos/BuscarCep?cep=99999999");
 
         Assert.Equal(HttpStatusCode.NotFound, resposta.StatusCode);
+    }
+
+    [Fact]
+    public async Task Importa_csv_via_http_com_validos_e_invalidos()
+    {
+        var client = await ClientAutenticadoAsync("bruno");
+
+        var form = await client.GetAsync("/Enderecos/Importar");
+        form.EnsureSuccessStatusCode();
+        var token = HtmlHelpers.ExtractAntiForgeryToken(await form.Content.ReadAsStringAsync());
+
+        var csv = "CEP,Logradouro,Número,Complemento,Bairro,Cidade,UF\n" +
+                  "80010000,Rua Importada,99,,Centro,Curitiba,PR\n" + // válida
+                  "abc,Rua Ruim,1,,Centro,Cidade,SP";                 // inválida (CEP)
+
+        using var content = new MultipartFormDataContent();
+        var arquivo = new ByteArrayContent(Encoding.UTF8.GetBytes(csv));
+        arquivo.Headers.ContentType = new MediaTypeHeaderValue("text/csv");
+        content.Add(arquivo, "arquivo", "enderecos.csv");
+        content.Add(new StringContent(token), "__RequestVerificationToken");
+
+        var resp = await client.PostAsync("/Enderecos/Importar", content);
+
+        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+        var html = await resp.Content.ReadAsStringAsync();
+        Assert.Contains("importado", html, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("rejeitada", html, StringComparison.OrdinalIgnoreCase);
+
+        var lista = await (await client.GetAsync("/Enderecos")).Content.ReadAsStringAsync();
+        Assert.Contains("Rua Importada", lista);
+        Assert.Contains("Curitiba", lista);
     }
 
     [Fact]

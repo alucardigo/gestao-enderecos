@@ -4,6 +4,10 @@ Aplicação web em **C# / ASP.NET Core MVC** para o teste técnico de desenvolve
 **login**, **gerenciar um CRUD de endereços** (cadastro manual ou **autopreenchimento por CEP via
 [ViaCEP](https://viacep.com.br/)**) e **exportar os endereços para CSV**.
 
+> Como **extra** (além do enunciado), há também **importação de endereços via planilha CSV** com
+> validação por linha — importa as válidas e reporta as inválidas com a linha e o motivo.
+> Veja a planilha de exemplo em [`docs/exemplos/`](docs/exemplos/).
+
 Implementa exatamente o escopo proposto — robusto, sem *overengineering*. A meta é um código que um
 sênior reconheça pela qualidade e um júnior leia sem esforço.
 
@@ -23,6 +27,10 @@ sênior reconheça pela qualidade e um júnior leia sem esforço.
 | Autopreenchimento por CEP (foco pula p/ Número) | Confirmação de exclusão |
 |-------------------------------------------------|-------------------------|
 | ![CEP](docs/screenshots/03-cep-autofill.png) | ![Excluir](docs/screenshots/05-modal-exclusao.png) |
+
+**Importação CSV — válidas importadas, inválidas reportadas com linha e motivo**
+
+![Importação](docs/screenshots/08-import-relatorio.png)
 
 ## Stack
 - **.NET 8 LTS** · ASP.NET Core **MVC** (Razor)

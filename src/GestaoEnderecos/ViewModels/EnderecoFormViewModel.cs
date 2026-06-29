@@ -35,7 +35,7 @@ public class EnderecoFormViewModel
     public string Cidade { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "UF.")]
-    [RegularExpression(@"^[A-Za-z]{2}$", ErrorMessage = "UF deve ter 2 letras.")]
+    [UfValida(ErrorMessage = "UF inválida.")]
     [Display(Name = "UF")]
     public string Uf { get; set; } = string.Empty;
 

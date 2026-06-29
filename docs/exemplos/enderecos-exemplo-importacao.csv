@@ -1,0 +1,23 @@
+CEP,Logradouro,Número,Complemento,Bairro,Cidade,UF
+01001-000,Praça da Sé,100,,Sé,São Paulo,SP
+20040002,Rua da Assembleia,50,Sala 2,Centro,Rio de Janeiro,RJ
+30140-071,Rua da Bahia,1000,Loja 3,Centro,Belo Horizonte,MG
+70040-010,Esplanada dos Ministérios,S/N,Bloco A,Zona Cívica,Brasília,DF
+40010-000,Avenida Sete de Setembro,123-A,,Centro,Salvador,ba
+80010-000,"Rua XV de Novembro, 200",10,Conj. 5,Centro,Curitiba,PR
+90010-150,Rua dos Andradas,0,,Centro Histórico,Porto Alegre,RS
+69005-070,Avenida Eduardo Ribeiro,45,"Sala ""B""",Centro,Manaus,AM
+01.310-100,Avenida Paulista,1578,,Bela Vista,São Paulo,SP
+50030-230,Rua do Bom Jesus,77,,Recife Antigo,Recife,PE
+,Rua Sem CEP,10,,Centro,Cidade,SP
+123,Rua com CEP Curto,10,,Centro,Cidade,SP
+abcdefgh,Rua com CEP em Letras,10,,Centro,Cidade,SP
+01001000,,10,,Centro,Cidade,SP
+01001000,Rua Sem Bairro,10,,,Cidade,SP
+01001000,Rua Sem Cidade,10,,Centro,,SP
+01001000,Rua Sem Numero,,,Centro,Cidade,SP
+01001000,Rua com UF Inexistente,10,,Centro,Cidade,XX
+01001000,Rua com UF Invalida,10,,Centro,Cidade,Brasil
+01001000,Rua com Numero Muito Longo,1234567890123456,,Centro,Cidade,SP
+01001000,Rua com Logradouro Que Ultrapassa o Limite de Cento e Cinquenta Caracteres Para Disparar a Validacao de Tamanho Maximo do Campo Logradouro no Servico de Importacao Hoje,10,,Centro,Cidade,SP
+01001000,Rua com Complemento Longo,10,Complemento que ultrapassa o limite de sessenta caracteres permitidos aqui,Centro,Cidade,SP

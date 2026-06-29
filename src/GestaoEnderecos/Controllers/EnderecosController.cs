@@ -17,12 +17,15 @@ public class EnderecosController : Controller
     private readonly EnderecoService _service;
     private readonly IViaCepService _viaCep;
     private readonly CsvExporter _csv;
+    private readonly EnderecoImportService _import;
 
-    public EnderecosController(EnderecoService service, IViaCepService viaCep, CsvExporter csv)
+    public EnderecosController(
+        EnderecoService service, IViaCepService viaCep, CsvExporter csv, EnderecoImportService import)
     {
         _service = service;
         _viaCep = viaCep;
         _csv = csv;
+        _import = import;
     }
 
     [HttpGet]
@@ -49,6 +52,25 @@ public class EnderecosController : Controller
         var conteudo = _csv.Exportar(enderecos);
         var nomeArquivo = $"enderecos_{DateTime.Today:yyyy-MM-dd}.csv";
         return File(conteudo, "text/csv", nomeArquivo);
+    }
+
+    [HttpGet]
+    public IActionResult Importar() => View();
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(50_000_000)]
+    public async Task<IActionResult> Importar(IFormFile? arquivo, CancellationToken ct)
+    {
+        if (arquivo is null || arquivo.Length == 0)
+        {
+            ModelState.AddModelError(string.Empty, "Selecione um arquivo CSV.");
+            return View();
+        }
+
+        await using var stream = arquivo.OpenReadStream();
+        var resultado = await _import.ImportarAsync(stream, ct);
+        return View(resultado);
     }
 
     [HttpGet]
