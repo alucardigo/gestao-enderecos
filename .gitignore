@@ -4,6 +4,12 @@
 [Oo]ut/
 [Dd]ebug/
 [Rr]elease/
+publish/
+publish-*/
+*.tgz
+*.db
+*.db-shm
+*.db-wal
 
 # Visual Studio / Rider / VS Code
 .vs/
