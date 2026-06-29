@@ -40,7 +40,7 @@ importação por planilha e busca tolerante, mantendo o código limpo e legível
 | ![Import](docs/screenshots/08-import-relatorio.png) | ![Admin](docs/screenshots/11-admin-usuarios.png) |
 
 ## 📚 Documentação
-- **[Defesa técnica (estilo TCC) — PDF](docs/TCC_DEFESA_TECNICA.pdf)** · [versão Markdown](docs/TCC_DEFESA_TECNICA.md)
+- **[Defesa técnica completa — PDF](docs/DEFESA_TECNICA.pdf)** · [versão Markdown](docs/DEFESA_TECNICA.md)
   — atendimento requisito a requisito, segurança, escalabilidade, uso de IA e roadmap.
 - **[Dossiê resumido — PDF](docs/DOSSIE_AVALIADOR.pdf)** · [Markdown](docs/DOSSIE_AVALIADOR.md)
 - **[Ambiente produtivo na Oracle Cloud](docs/INFRA-OCI.md)** — app + SQL Server (Azure SQL Edge) em rede privada
@@ -103,12 +103,12 @@ docs/                          Documentação, evidências e exemplos
   **Damerau-Levenshtein** para typos — porque o `LIKE` do SQLite é sensível a caixa/acento.
 - **ViaCEP por endpoint interno** com *cache*; **CSV com CsvHelper** (UTF-8+BOM).
 
-## Segurança (resumo — capítulo completo no TCC)
+## Segurança (resumo — capítulo completo na Defesa Técnica)
 PBKDF2 para senhas; rate limiting no login; política de senha forte (≥8, 3 classes); CSRF
 (antiforgery) em todas as mutações; XSS (encoding do Razor + CSP); SQL injection (EF parametrizado);
 cabeçalhos de segurança (CSP, nosniff, X-Frame-Options, Referrer-Policy); isolamento por usuário.
 
-## O que ficou de fora (de propósito, com roadmap no TCC)
+## O que ficou de fora (de propósito, com roadmap na Defesa Técnica)
 EF Migrations (usa `EnsureCreated` para simplicidade), lockout persistente por usuário, verificação
 contra senhas vazadas, observabilidade, HTTPS+domínio na demo, *streaming*/bulk para milhões de linhas.
 
