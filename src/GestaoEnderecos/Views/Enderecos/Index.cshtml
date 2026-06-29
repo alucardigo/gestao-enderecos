@@ -13,7 +13,13 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3 mb-0">Seus endereços</h1>
-    <a asp-action="Create" class="btn btn-primary">+ Adicionar</a>
+    <div class="d-flex gap-2">
+        @if (Model.Count > 0)
+        {
+            <a asp-action="Exportar" class="btn btn-outline-secondary">⬇ Exportar CSV</a>
+        }
+        <a asp-action="Create" class="btn btn-primary">+ Adicionar</a>
+    </div>
 </div>
 
 @if (Model.Count == 0)

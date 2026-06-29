@@ -16,11 +16,13 @@ public class EnderecosController : Controller
 {
     private readonly EnderecoService _service;
     private readonly IViaCepService _viaCep;
+    private readonly CsvExporter _csv;
 
-    public EnderecosController(EnderecoService service, IViaCepService viaCep)
+    public EnderecosController(EnderecoService service, IViaCepService viaCep, CsvExporter csv)
     {
         _service = service;
         _viaCep = viaCep;
+        _csv = csv;
     }
 
     [HttpGet]
@@ -38,6 +40,15 @@ public class EnderecosController : Controller
         return endereco is null
             ? NotFound(new { mensagem = "CEP não encontrado. Preencha manualmente." })
             : Ok(endereco);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Exportar(CancellationToken ct)
+    {
+        var enderecos = await _service.ListarAsync(ct);
+        var conteudo = _csv.Exportar(enderecos);
+        var nomeArquivo = $"enderecos_{DateTime.Today:yyyy-MM-dd}.csv";
+        return File(conteudo, "text/csv", nomeArquivo);
     }
 
     [HttpGet]

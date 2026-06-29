@@ -27,6 +27,7 @@ builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 builder.Services.AddScoped<AutenticacaoService>();
 builder.Services.AddScoped<EnderecoService>();
+builder.Services.AddSingleton<CsvExporter>();
 
 // Cliente HTTP tipado para o ViaCEP (pool de conexões via IHttpClientFactory + timeout curto).
 builder.Services.AddHttpClient<IViaCepService, ViaCepService>(client =>
