@@ -4,6 +4,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GestaoEnderecos.Services;
 
+/// <summary>Uma página de endereços (resultado paginado + metadados para a navegação).</summary>
+public sealed record PaginaEnderecos(
+    IReadOnlyList<Endereco> Itens, int Total, int Pagina, int TamanhoPagina, string? Busca)
+{
+    public int TotalPaginas => Total == 0 ? 1 : (int)Math.Ceiling((double)Total / TamanhoPagina);
+}
+
 /// <summary>
 /// Regras de negócio do CRUD de endereços. Todas as leituras/escritas passam pelo
 /// <see cref="AppDbContext"/>, cujo filtro global garante que um usuário só enxerga e altera
@@ -20,11 +27,40 @@ public class EnderecoService
         _currentUser = currentUser;
     }
 
+    /// <summary>Lista todos os endereços do usuário (usado pela exportação).</summary>
     public async Task<List<Endereco>> ListarAsync(CancellationToken ct = default) =>
         await _db.Enderecos
             .AsNoTracking()
             .OrderBy(e => e.Cidade).ThenBy(e => e.Logradouro)
             .ToListAsync(ct);
+
+    /// <summary>Lista paginada com busca opcional (logradouro, cidade, bairro ou CEP).</summary>
+    public async Task<PaginaEnderecos> ListarPaginadoAsync(
+        string? busca, int pagina, int tamanho, CancellationToken ct = default)
+    {
+        if (pagina < 1) pagina = 1;
+        if (tamanho < 1) tamanho = 10;
+
+        var query = _db.Enderecos.AsNoTracking();
+        var termo = busca?.Trim();
+        if (!string.IsNullOrEmpty(termo))
+        {
+            query = query.Where(e =>
+                e.Logradouro.Contains(termo) ||
+                e.Cidade.Contains(termo) ||
+                e.Bairro.Contains(termo) ||
+                e.Cep.Contains(termo));
+        }
+
+        var total = await query.CountAsync(ct);
+        var itens = await query
+            .OrderBy(e => e.Cidade).ThenBy(e => e.Logradouro)
+            .Skip((pagina - 1) * tamanho)
+            .Take(tamanho)
+            .ToListAsync(ct);
+
+        return new PaginaEnderecos(itens, total, pagina, tamanho, termo);
+    }
 
     public async Task<Endereco?> ObterAsync(int id, CancellationToken ct = default) =>
         await _db.Enderecos.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id, ct);

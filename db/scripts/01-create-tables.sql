@@ -78,8 +78,9 @@ BEGIN
             CHECK (Cep NOT LIKE '%[^0-9]%')
     );
 
-    -- Toda consulta de endereços é filtrada por usuário (multitenancy lógico).
-    CREATE NONCLUSTERED INDEX IX_Enderecos_IdUsuario
-        ON dbo.Enderecos (IdUsuario);
+    -- Índice composto: filtro por usuário + ordenação por cidade/logradouro (cobre a listagem
+    -- e evita ordenação custosa). O prefixo IdUsuario também serve às demais consultas por usuário.
+    CREATE NONCLUSTERED INDEX IX_Enderecos_IdUsuario_Cidade_Logradouro
+        ON dbo.Enderecos (IdUsuario, Cidade, Logradouro);
 END;
 GO

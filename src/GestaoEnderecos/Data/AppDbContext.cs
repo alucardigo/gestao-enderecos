@@ -58,7 +58,10 @@ public class AppDbContext : DbContext
                 .WithMany(u => u.Enderecos)
                 .HasForeignKey(x => x.IdUsuario)
                 .OnDelete(DeleteBehavior.Cascade);
-            e.HasIndex(x => x.IdUsuario).HasDatabaseName("IX_Enderecos_IdUsuario");
+            // Índice composto alinhado ao filtro (IdUsuario) + ordenação (Cidade, Logradouro):
+            // cobre a query da listagem e elimina o sort. Serve também como índice de IdUsuario.
+            e.HasIndex(x => new { x.IdUsuario, x.Cidade, x.Logradouro })
+                .HasDatabaseName("IX_Enderecos_IdUsuario_Cidade_Logradouro");
 
             // Isolamento por usuário: NENHUMA consulta (list, Find, edição, exclusão) enxerga
             // endereço de outro usuário. O filtro lê _currentUser.Id no momento da consulta; o

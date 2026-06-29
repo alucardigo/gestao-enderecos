@@ -1,6 +1,7 @@
 using System.Net;
 using GestaoEnderecos.Services;
 using GestaoEnderecos.Tests.TestSupport;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace GestaoEnderecos.Tests.Unit;
@@ -11,6 +12,7 @@ public class ViaCepServiceTests
     private static ViaCepService Criar(StubHttpMessageHandler handler) =>
         new(
             new HttpClient(handler) { BaseAddress = new Uri("https://viacep.com.br/") },
+            new MemoryCache(new MemoryCacheOptions()),
             NullLogger<ViaCepService>.Instance);
 
     [Fact] // T1

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GestaoEnderecos.Controllers;
 
@@ -35,6 +36,7 @@ public class AccountController : Controller
 
     [HttpPost]
     [AllowAnonymous]
+    [EnableRateLimiting("login")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel model, CancellationToken ct)
     {
@@ -70,6 +72,7 @@ public class AccountController : Controller
 
     [HttpPost]
     [AllowAnonymous]
+    [EnableRateLimiting("login")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model, CancellationToken ct)
     {

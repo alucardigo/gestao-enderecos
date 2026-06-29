@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using CsvHelper;
 using CsvHelper.Configuration;
 using GestaoEnderecos.Data;
@@ -75,7 +76,7 @@ public sealed class EnderecoImportService
             PrepareHeaderForMatch = args => args.Header?.Trim().ToLowerInvariant() ?? string.Empty,
         };
 
-        using var reader = new StreamReader(conteudo);
+        using var reader = new StreamReader(conteudo, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
         using var csv = new CsvReader(reader, config);
         csv.Context.RegisterClassMap<ImportRowMap>();
 
@@ -84,12 +85,22 @@ public sealed class EnderecoImportService
             return new ImportResult { TotalLinhas = 0, Importados = 0, Erros = [] };
         }
 
-        var validos = new List<Endereco>();
+        const int maxLinhas = 10_000;
+        const int tamanhoLote = 500;
         var erros = new List<ImportError>();
+        var lote = new List<Endereco>(tamanhoLote);
         var total = 0;
+        var importados = 0;
 
         while (await csv.ReadAsync())
         {
+            if (total >= maxLinhas)
+            {
+                erros.Add(new ImportError(csv.Parser.Row,
+                    $"Limite de {maxLinhas} linhas por importação excedido; as demais não foram processadas."));
+                break;
+            }
+
             total++;
             var linha = csv.Parser.Row;
 
@@ -112,16 +123,32 @@ public sealed class EnderecoImportService
             }
 
             endereco.IdUsuario = _currentUser.Id;
-            validos.Add(endereco);
+            lote.Add(endereco);
+
+            if (lote.Count >= tamanhoLote)
+            {
+                importados += await GravarLoteAsync();
+            }
         }
 
-        if (validos.Count > 0)
+        importados += await GravarLoteAsync();
+        return new ImportResult { TotalLinhas = total, Importados = importados, Erros = erros };
+
+        // Grava o lote atual e limpa o rastreamento — mantém o uso de memória limitado em cargas grandes.
+        async Task<int> GravarLoteAsync()
         {
-            _db.Enderecos.AddRange(validos);
-            await _db.SaveChangesAsync(ct);
-        }
+            if (lote.Count == 0)
+            {
+                return 0;
+            }
 
-        return new ImportResult { TotalLinhas = total, Importados = validos.Count, Erros = erros };
+            _db.Enderecos.AddRange(lote);
+            await _db.SaveChangesAsync(ct);
+            _db.ChangeTracker.Clear();
+            var gravados = lote.Count;
+            lote.Clear();
+            return gravados;
+        }
     }
 
     private static (Endereco? Endereco, List<string> Erros) ValidarEMapear(ImportRow row)

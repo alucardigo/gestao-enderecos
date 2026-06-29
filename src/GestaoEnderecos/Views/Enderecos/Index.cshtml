@@ -1,6 +1,7 @@
-@model IReadOnlyList<Endereco>
+@model GestaoEnderecos.Services.PaginaEnderecos
 @{
     ViewData["Title"] = "Endereços";
+    var temBusca = !string.IsNullOrEmpty(Model.Busca);
 }
 
 @if (TempData["Sucesso"] is string sucesso)
@@ -11,11 +12,11 @@
     </div>
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <h1 class="h3 mb-0">Seus endereços</h1>
     <div class="d-flex gap-2">
         <a asp-action="Importar" class="btn btn-outline-secondary">⬆ Importar CSV</a>
-        @if (Model.Count > 0)
+        @if (Model.Total > 0)
         {
             <a asp-action="Exportar" class="btn btn-outline-secondary">⬇ Exportar CSV</a>
         }
@@ -23,11 +24,30 @@
     </div>
 </div>
 
-@if (Model.Count == 0)
+<form asp-action="Index" method="get" class="mb-3">
+    <div class="input-group" style="max-width:480px">
+        <input type="text" name="q" value="@Model.Busca" class="form-control"
+               placeholder="Buscar por logradouro, cidade, bairro ou CEP…" />
+        <button type="submit" class="btn btn-outline-secondary">Buscar</button>
+        @if (temBusca)
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary">Limpar</a>
+        }
+    </div>
+</form>
+
+@if (Model.Total == 0)
 {
     <div class="text-center text-muted py-5 border rounded bg-light">
-        <p class="mb-3">Você ainda não cadastrou endereços.</p>
-        <a asp-action="Create" class="btn btn-primary">Adicionar primeiro endereço</a>
+        @if (temBusca)
+        {
+            <p class="mb-0">Nenhum endereço encontrado para “@Model.Busca”.</p>
+        }
+        else
+        {
+            <p class="mb-3">Você ainda não cadastrou endereços.</p>
+            <a asp-action="Create" class="btn btn-primary">Adicionar primeiro endereço</a>
+        }
     </div>
 }
 else
@@ -47,7 +67,7 @@ else
                 </tr>
             </thead>
             <tbody>
-                @foreach (var e in Model)
+                @foreach (var e in Model.Itens)
                 {
                     <tr>
                         <td>@FormatarCep(e.Cep)</td>
@@ -69,6 +89,27 @@ else
                 }
             </tbody>
         </table>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <small class="text-muted">
+            @Model.Total endereço(s) · página @Model.Pagina de @Model.TotalPaginas
+        </small>
+        @if (Model.TotalPaginas > 1)
+        {
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item @(Model.Pagina <= 1 ? "disabled" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-q="@Model.Busca"
+                           asp-route-pagina="@(Model.Pagina - 1)">Anterior</a>
+                    </li>
+                    <li class="page-item @(Model.Pagina >= Model.TotalPaginas ? "disabled" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-q="@Model.Busca"
+                           asp-route-pagina="@(Model.Pagina + 1)">Próxima</a>
+                    </li>
+                </ul>
+            </nav>
+        }
     </div>
 }
 
@@ -99,7 +140,6 @@ else
 
 @section Scripts {
     <script>
-        // Preenche o modal com o endereço da linha clicada (um único modal reaproveitado).
         const modalExcluir = document.getElementById('modalExcluir');
         modalExcluir?.addEventListener('show.bs.modal', function (event) {
             const botao = event.relatedTarget;

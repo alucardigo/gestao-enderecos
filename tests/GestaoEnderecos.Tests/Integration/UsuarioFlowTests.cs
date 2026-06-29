@@ -81,6 +81,27 @@ public class UsuarioFlowTests : IClassFixture<GestaoWebAppFactory>
     }
 
     [Fact]
+    public async Task Registro_rejeita_senha_fraca()
+    {
+        var client = CriarClient();
+        var pagina = await client.GetAsync("/Account/Register");
+        var token = HtmlHelpers.ExtractAntiForgeryToken(await pagina.Content.ReadAsStringAsync());
+
+        var registro = await client.PostAsync("/Account/Register", new FormUrlEncodedContent(
+            new Dictionary<string, string>
+            {
+                ["Nome"] = "Fraco",
+                ["Login"] = "fraco",
+                ["Senha"] = "123456",
+                ["ConfirmarSenha"] = "123456",
+                ["__RequestVerificationToken"] = token,
+            }));
+
+        Assert.Equal(HttpStatusCode.OK, registro.StatusCode); // volta com erro de validação
+        Assert.Contains("8 caracteres", await registro.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
     public async Task Usuario_comum_nao_acessa_area_administrativa()
     {
         var bruno = await LogarAsync("bruno"); // não-admin

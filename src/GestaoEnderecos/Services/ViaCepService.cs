@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace GestaoEnderecos.Services;
 
@@ -11,11 +12,13 @@ namespace GestaoEnderecos.Services;
 public sealed class ViaCepService : IViaCepService
 {
     private readonly HttpClient _http;
+    private readonly IMemoryCache _cache;
     private readonly ILogger<ViaCepService> _logger;
 
-    public ViaCepService(HttpClient http, ILogger<ViaCepService> logger)
+    public ViaCepService(HttpClient http, IMemoryCache cache, ILogger<ViaCepService> logger)
     {
         _http = http;
+        _cache = cache;
         _logger = logger;
     }
 
@@ -25,6 +28,12 @@ public sealed class ViaCepService : IViaCepService
         if (digitos.Length != 8)
         {
             return null;
+        }
+
+        // Cache: o CEP é um dado estável; evita repetir a ida à API externa sob carga.
+        if (_cache.TryGetValue($"cep:{digitos}", out EnderecoViaCep? cacheado))
+        {
+            return cacheado;
         }
 
         try
@@ -37,13 +46,16 @@ public sealed class ViaCepService : IViaCepService
                 return null;
             }
 
-            return new EnderecoViaCep(
+            var resultado = new EnderecoViaCep(
                 Cep: digitos,
                 Logradouro: dto.Logradouro ?? string.Empty,
                 Bairro: dto.Bairro ?? string.Empty,
                 Cidade: dto.Localidade ?? string.Empty,
                 Uf: dto.Uf ?? string.Empty,
                 Complemento: dto.Complemento);
+
+            _cache.Set($"cep:{digitos}", resultado, TimeSpan.FromHours(1));
+            return resultado;
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {

@@ -29,8 +29,8 @@ public class EnderecosController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(CancellationToken ct) =>
-        View(await _service.ListarAsync(ct));
+    public async Task<IActionResult> Index(string? q, int pagina, CancellationToken ct) =>
+        View(await _service.ListarPaginadoAsync(q, pagina, tamanho: 10, ct));
 
     /// <summary>
     /// Proxy interno para o ViaCEP: o JS do formulário chama esta rota; o servidor é quem
@@ -67,12 +67,19 @@ public class EnderecosController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequestSizeLimit(50_000_000)]
+    [RequestSizeLimit(5_000_000)]
     public async Task<IActionResult> Importar(IFormFile? arquivo, CancellationToken ct)
     {
         if (arquivo is null || arquivo.Length == 0)
         {
             ModelState.AddModelError(string.Empty, "Selecione um arquivo CSV.");
+            return View();
+        }
+
+        // Validação no servidor (o accept= da view é só dica de UI, contornável).
+        if (!arquivo.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            ModelState.AddModelError(string.Empty, "Envie um arquivo no formato CSV (.csv).");
             return View();
         }
 

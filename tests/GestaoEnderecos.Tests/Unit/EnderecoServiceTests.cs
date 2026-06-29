@@ -20,6 +20,44 @@ public class EnderecoServiceTests
     }
 
     [Fact]
+    public async Task ListarPaginado_pagina_e_filtra_por_busca()
+    {
+        using var db = new SqliteTestDb();
+        int uid;
+        await using (var ctx = db.NewContext(0))
+        {
+            var u = new Usuario { Nome = "Ana", Login = "ana", SenhaHash = "x" };
+            ctx.Usuarios.Add(u);
+            await ctx.SaveChangesAsync();
+            uid = u.Id;
+        }
+
+        var criador = new EnderecoService(db.NewContext(uid), new FakeCurrentUser(uid));
+        for (var i = 0; i < 25; i++)
+        {
+            await criador.CriarAsync(new Endereco
+            {
+                Cep = "01001000",
+                Logradouro = $"Rua {i}",
+                Bairro = "Centro",
+                Cidade = i < 5 ? "Curitiba" : "São Paulo",
+                Uf = "SP",
+                Numero = $"{i}",
+            });
+        }
+
+        var pagina1 = await new EnderecoService(db.NewContext(uid), new FakeCurrentUser(uid))
+            .ListarPaginadoAsync(null, 1, 10);
+        Assert.Equal(25, pagina1.Total);
+        Assert.Equal(10, pagina1.Itens.Count);
+        Assert.Equal(3, pagina1.TotalPaginas);
+
+        var busca = await new EnderecoService(db.NewContext(uid), new FakeCurrentUser(uid))
+            .ListarPaginadoAsync("Curitiba", 1, 10);
+        Assert.Equal(5, busca.Total);
+    }
+
+    [Fact]
     public async Task CriarAsync_persiste_cep_sem_mascara_e_uf_em_maiusculas()
     {
         using var db = new SqliteTestDb();

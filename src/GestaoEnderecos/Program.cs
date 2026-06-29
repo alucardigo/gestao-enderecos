@@ -1,10 +1,12 @@
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
+using System.Threading.RateLimiting;
 using GestaoEnderecos.Data;
 using GestaoEnderecos.Models;
 using GestaoEnderecos.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.WebEncoders;
 
@@ -13,6 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 // MVC + acesso ao HttpContext (necessário para o filtro global por usuário).
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache(); // cache em memória (ex.: respostas do ViaCEP)
 
 // Permite que acentos do português saiam como UTF-8 no HTML, em vez de entidades numéricas.
 builder.Services.Configure<WebEncoderOptions>(options =>
@@ -70,7 +73,36 @@ builder.Services
     });
 builder.Services.AddAuthorization();
 
+// Rate limiting (anti força-bruta) por IP nas rotas de login/cadastro. Em testes, limite alto
+// para não interferir nos cenários automatizados.
+var limiteLogin = builder.Environment.IsEnvironment("Testing") ? 10_000 : 10;
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("login", http =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            http.Connection.RemoteIpAddress?.ToString() ?? "anon",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = limiteLogin,
+                Window = TimeSpan.FromMinutes(1),
+            }));
+});
+
 var app = builder.Build();
+
+// Cabeçalhos de segurança (defesa em profundidade contra MIME sniffing, clickjacking e XSS).
+app.Use(async (context, next) =>
+{
+    var headers = context.Response.Headers;
+    headers["X-Content-Type-Options"] = "nosniff";
+    headers["X-Frame-Options"] = "DENY";
+    headers["Referrer-Policy"] = "no-referrer";
+    headers["Content-Security-Policy"] =
+        "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; " +
+        "script-src 'self' 'unsafe-inline'; frame-ancestors 'none'";
+    await next();
+});
 
 if (!app.Environment.IsDevelopment())
 {
@@ -85,6 +117,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseRateLimiter();
 
 // A ordem importa: autenticação antes da autorização.
 app.UseAuthentication();
