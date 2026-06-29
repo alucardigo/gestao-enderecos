@@ -1,0 +1,18 @@
+@model EnderecoFormViewModel
+@{
+    ViewData["Title"] = "Editar endereço";
+}
+
+<h1 class="h3 mb-3">Editar endereço</h1>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+    <partial name="_Form" model="Model" />
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Salvar endereço</button>
+        <a asp-action="Index" class="btn btn-link">Cancelar</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

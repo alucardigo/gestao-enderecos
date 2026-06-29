@@ -1,5 +1,104 @@
+@model IReadOnlyList<Endereco>
 @{
     ViewData["Title"] = "Endereços";
 }
-<h1 class="h3 mb-3">Seus endereços</h1>
-<p class="text-muted">Lista, cadastro com busca por CEP e exportação CSV chegam na próxima fatia.</p>
+
+@if (TempData["Sucesso"] is string sucesso)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @sucesso
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Seus endereços</h1>
+    <a asp-action="Create" class="btn btn-primary">+ Adicionar</a>
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="text-center text-muted py-5 border rounded bg-light">
+        <p class="mb-3">Você ainda não cadastrou endereços.</p>
+        <a asp-action="Create" class="btn btn-primary">Adicionar primeiro endereço</a>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>CEP</th>
+                    <th>Logradouro</th>
+                    <th>Nº</th>
+                    <th>Complemento</th>
+                    <th>Bairro</th>
+                    <th>Cidade</th>
+                    <th>UF</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var e in Model)
+                {
+                    <tr>
+                        <td>@FormatarCep(e.Cep)</td>
+                        <td>@e.Logradouro</td>
+                        <td>@e.Numero</td>
+                        <td>@e.Complemento</td>
+                        <td>@e.Bairro</td>
+                        <td>@e.Cidade</td>
+                        <td>@e.Uf</td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="Edit" asp-route-id="@e.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal" data-bs-target="#modalExcluir"
+                                    data-id="@e.Id" data-descricao="@e.Logradouro, @e.Numero">
+                                Excluir
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<div class="modal fade" id="modalExcluir" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formExcluir" method="post" asp-action="Delete">
+                <div class="modal-header">
+                    <h5 class="modal-title">Excluir endereço</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    Tem certeza que deseja excluir <strong id="descExcluir"></strong>?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Excluir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private static string FormatarCep(string? cep) =>
+        cep is { Length: 8 } ? $"{cep[..5]}-{cep[5..]}" : cep ?? string.Empty;
+}
+
+@section Scripts {
+    <script>
+        // Preenche o modal com o endereço da linha clicada (um único modal reaproveitado).
+        const modalExcluir = document.getElementById('modalExcluir');
+        modalExcluir?.addEventListener('show.bs.modal', function (event) {
+            const botao = event.relatedTarget;
+            document.getElementById('descExcluir').textContent = botao.getAttribute('data-descricao');
+            document.getElementById('formExcluir').action =
+                '@Url.Action("Delete")/' + botao.getAttribute('data-id');
+        });
+    </script>
+}

@@ -1,0 +1,86 @@
+using GestaoEnderecos.Data;
+using GestaoEnderecos.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace GestaoEnderecos.Services;
+
+/// <summary>
+/// Regras de negócio do CRUD de endereços. Todas as leituras/escritas passam pelo
+/// <see cref="AppDbContext"/>, cujo filtro global garante que um usuário só enxerga e altera
+/// os próprios endereços — uma tentativa de acessar id alheio simplesmente "não encontra".
+/// </summary>
+public class EnderecoService
+{
+    private readonly AppDbContext _db;
+    private readonly ICurrentUser _currentUser;
+
+    public EnderecoService(AppDbContext db, ICurrentUser currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
+
+    public async Task<List<Endereco>> ListarAsync(CancellationToken ct = default) =>
+        await _db.Enderecos
+            .AsNoTracking()
+            .OrderBy(e => e.Cidade).ThenBy(e => e.Logradouro)
+            .ToListAsync(ct);
+
+    public async Task<Endereco?> ObterAsync(int id, CancellationToken ct = default) =>
+        await _db.Enderecos.FirstOrDefaultAsync(e => e.Id == id, ct);
+
+    public async Task<Endereco> CriarAsync(Endereco endereco, CancellationToken ct = default)
+    {
+        Normalizar(endereco);
+        endereco.IdUsuario = _currentUser.Id;
+        _db.Enderecos.Add(endereco);
+        await _db.SaveChangesAsync(ct);
+        return endereco;
+    }
+
+    /// <returns><c>false</c> se o endereço não existe ou pertence a outro usuário.</returns>
+    public async Task<bool> AtualizarAsync(int id, Endereco dados, CancellationToken ct = default)
+    {
+        var atual = await _db.Enderecos.FirstOrDefaultAsync(e => e.Id == id, ct);
+        if (atual is null)
+        {
+            return false;
+        }
+
+        Normalizar(dados);
+        atual.Cep = dados.Cep;
+        atual.Logradouro = dados.Logradouro;
+        atual.Complemento = dados.Complemento;
+        atual.Bairro = dados.Bairro;
+        atual.Cidade = dados.Cidade;
+        atual.Uf = dados.Uf;
+        atual.Numero = dados.Numero;
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    /// <returns><c>false</c> se o endereço não existe ou pertence a outro usuário.</returns>
+    public async Task<bool> ExcluirAsync(int id, CancellationToken ct = default)
+    {
+        var atual = await _db.Enderecos.FirstOrDefaultAsync(e => e.Id == id, ct);
+        if (atual is null)
+        {
+            return false;
+        }
+
+        _db.Enderecos.Remove(atual);
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    /// <summary>Mantém o dado consistente: CEP só com dígitos, UF em maiúsculas.</summary>
+    private static void Normalizar(Endereco endereco)
+    {
+        endereco.Cep = NormalizarCep(endereco.Cep);
+        endereco.Uf = (endereco.Uf ?? string.Empty).Trim().ToUpperInvariant();
+    }
+
+    /// <summary>Remove máscara do CEP, deixando apenas os dígitos (ex.: "01001-000" → "01001000").</summary>
+    public static string NormalizarCep(string? cep) =>
+        new([.. (cep ?? string.Empty).Where(char.IsDigit)]);
+}
