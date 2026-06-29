@@ -13,7 +13,7 @@ Este documento defende, item a item, como a aplicação **atende integralmente**
 pela AeC e o **supera** com cuidados de produto, segurança e escalabilidade — sem cair em
 *overengineering*. Para cada requisito do enunciado, apresenta-se: **o que foi feito**, **como
 funciona**, **por que foi feito assim** e a **evidência de conformidade** (teste automatizado e/ou
-captura de tela). A aplicação foi validada por **76 testes automatizados** (100% verdes), por
+captura de tela). A aplicação foi validada por **85 testes automatizados** (100% verdes), por
 **testes em navegador real simulando o uso humano** e está **publicada e funcionando** em nuvem.
 
 > **Princípio que rege todo o projeto:** reaproveitar o que o framework já resolve e gastar o
@@ -78,7 +78,9 @@ Em respeito à transparência:
 ### 2.4 CRUD de Endereços — Adicionar, visualizar, editar, excluir
 - **R:** "Permitir que o usuário adicione, visualize, edite e exclua endereços."
 - **Como funciona:** `EnderecosController` (fino) delega ao `EnderecoService`. Listagem com
-  **busca e paginação**; criação/edição com formulário validado; exclusão com **modal de
+  **paginação** e **busca tolerante** — ignora maiúsculas/acentos e tolera erros de digitação
+  (campo `TextoBusca` normalizado + fallback Damerau-Levenshtein), pois o `LIKE` do SQLite é
+  sensível a caixa/acento; criação/edição com formulário validado; exclusão com **modal de
   confirmação** citando o endereço real.
 - **Por quê:** *controllers* finos + serviço de domínio = testável e legível; modal evita exclusão
   acidental (UX).
@@ -293,6 +295,12 @@ Honesto sobre o que **não** vale agora vs. o que agregaria como produto:
 
 **Paginação em escala (1.716 endereços, 172 páginas)**
 ![Paginação](evidencias/13-paginacao.png)
+
+**Busca tolerante — "praca" (sem acento) encontra "Praça da Sé"**
+![Busca acento](evidencias/14-busca-acento.png)
+
+**Busca tolerante — "prasa" (erro de digitação) também encontra "Praça da Sé"**
+![Busca typo](evidencias/15-busca-typo.png)
 
 ---
 
