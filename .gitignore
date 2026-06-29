@@ -1,0 +1,32 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Dd]ebug/
+[Rr]elease/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vscode/
+
+# Test results
+[Tt]est[Rr]esult*/
+*.trx
+coverage/
+*.coverage
+
+# Rider
+*.DotSettings.user
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Segredos locais (nunca commitar) — usar User-Secrets / variáveis de ambiente
+appsettings.*.local.json
+secrets.json
