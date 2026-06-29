@@ -13,7 +13,7 @@ Este documento defende, item a item, como a aplicação **atende integralmente**
 pela AeC e o **supera** com cuidados de produto, segurança e escalabilidade — sem cair em
 *overengineering*. Para cada requisito do enunciado, apresenta-se: **o que foi feito**, **como
 funciona**, **por que foi feito assim** e a **evidência de conformidade** (teste automatizado e/ou
-captura de tela). A aplicação foi validada por **85 testes automatizados** (100% verdes), por
+captura de tela). A aplicação foi validada por **86 testes automatizados** (100% verdes), por
 **testes em navegador real simulando o uso humano** e está **publicada e funcionando** em nuvem.
 
 > **Princípio que rege todo o projeto:** reaproveitar o que o framework já resolve e gastar o
@@ -79,9 +79,10 @@ Em respeito à transparência:
 - **R:** "Permitir que o usuário adicione, visualize, edite e exclua endereços."
 - **Como funciona:** `EnderecosController` (fino) delega ao `EnderecoService`. Listagem com
   **paginação** e **busca tolerante** — ignora maiúsculas/acentos e tolera erros de digitação
-  (campo `TextoBusca` normalizado + fallback Damerau-Levenshtein), pois o `LIKE` do SQLite é
-  sensível a caixa/acento; criação/edição com formulário validado; exclusão com **modal de
-  confirmação** citando o endereço real.
+  (campo `TextoBusca` normalizado + fallback Damerau-Levenshtein), pois a busca por `LIKE` pode ser
+  sensível a caixa/acento conforme o banco/collation e queremos resultado consistente e tolerante a
+  digitação; criação/edição com formulário validado; exclusão com **modal de confirmação** citando o
+  endereço real.
 - **Por quê:** *controllers* finos + serviço de domínio = testável e legível; modal evita exclusão
   acidental (UX).
 - **✅ Conformidade:** testes `Criar_listar_e_exportar_enderecos`, `ListarPaginado_pagina_e_filtra`;
@@ -169,6 +170,11 @@ Em respeito à transparência:
   torna-se **impossível por construção**, não por disciplina.
 - **`PasswordHasher` nativo** (PBKDF2) em vez de criptografia escrita à mão.
 - **Provider de banco configurável** (SQL Server padrão / SQLite) — sem alterar código.
+- **Banco da demo ao vivo: SQL Server real** (Azure SQL Edge — o mesmo motor) numa instância x86
+  separada, acessado **só pela rede privada** (porta 1433 não exposta). App e banco em instâncias
+  distintas, como num ambiente real — detalhes em `docs/INFRA-OCI.md`.
+- **Cadastro de usuários restrito ao administrador** (sem autocadastro): decisão de segurança para um
+  sistema exposto, evitando criação indiscriminada de contas.
 - **Tratamento de erros** centralizado e enxuto (IExceptionHandler + páginas amigáveis).
 
 ---
@@ -224,15 +230,23 @@ linhas** sem degradação perceptível (evidências *09* e *13*).
 
 ## 6. Qualidade, testes e validação
 
-- **76 testes automatizados, 100% verdes** (xUnit): integração ViaCEP, CSV, hashing, normalização,
-  **isolamento (IDOR) por serviço e por HTTP**, fluxo de login, CRUD ponta a ponta, **importação
-  (incl. carga de 1.000 linhas)**, gestão de usuários, política de senha e paginação.
+- **86 testes automatizados, 100% verdes** (xUnit): integração ViaCEP, CSV, hashing, normalização,
+  **busca tolerante (caixa/acento/typo)**, **isolamento (IDOR) por serviço e por HTTP**, fluxo de
+  login, **criação de usuário pelo admin + ausência de rota de autocadastro**, CRUD ponta a ponta,
+  **importação (incl. carga de 1.000 linhas)**, política de senha e paginação.
 - **Quality gates:** `dotnet format` + `dotnet build -warnaserror` (zero *warnings*) + `dotnet test`,
   também no **CI (GitHub Actions)**.
+- **Revisão final anti-patterns / "vícios de IA"** (varredura dedicada): centralização de
+  duplicações, remoção de *boilerplate* de scaffold e padronização — código com cara de escrito por
+  um humano sênior, não gerado.
 - **Validação humana em navegador real (Playwright)** contra **SQL Server**, com **0 erros de
   console**: login, autopreenchimento por CEP, criar/editar/excluir, importação (válidos+inválidos)
   e importação massiva, menu de usuário, área administrativa, paginação (evidências §9).
-- **Produção:** publicado em nuvem (Oracle Cloud), com os cabeçalhos de segurança ativos.
+- **Produção:** publicado na **Oracle Cloud** com a aplicação e o **SQL Server (Azure SQL Edge)** em
+  instâncias separadas na mesma rede privada, cabeçalhos de segurança ativos. *Um bug real de UI
+  (badge de perfil invisível por incompatibilidade de versão do Bootstrap) foi encontrado justamente
+  no teste em navegador como humano e corrigido* — evidência de que a validação manual complementa os
+  testes automatizados.
 
 ---
 
@@ -301,6 +315,15 @@ Honesto sobre o que **não** vale agora vs. o que agregaria como produto:
 
 **Busca tolerante — "prasa" (erro de digitação) também encontra "Praça da Sé"**
 ![Busca typo](evidencias/15-busca-typo.png)
+
+**Busca tolerante rodando sobre o SQL Server da demo — "prasa" encontra "Praça"/"Praia"**
+![Busca SQL Server](evidencias/16-busca-typo-sqlserver.png)
+
+**Lista com 50 endereços reais sobre SQL Server (Azure SQL Edge) online**
+![Lista SQL Server](evidencias/17-lista-sqlserver.png)
+
+**Área administrativa — perfis exibidos corretamente após a correção do badge**
+![Perfis admin](evidencias/18-admin-perfil-badges.png)
 
 ---
 

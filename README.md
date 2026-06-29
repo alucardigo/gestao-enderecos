@@ -74,7 +74,7 @@ executar [`db/scripts/01-create-tables.sql`](db/scripts/01-create-tables.sql).
 ```bash
 dotnet test
 ```
-**85 testes** cirúrgicos: hashing e política de senha, normalização de CEP/UF, integração ViaCEP
+**86 testes** cirúrgicos: hashing e política de senha, normalização de CEP/UF, integração ViaCEP
 (sucesso/erro/timeout), CSV (escaping/BOM) e *round-trip* export↔import, **busca tolerante
 (caixa/acento/typo) em SQLite**, **isolamento entre usuários (leitura e escrita, por serviço e por
 HTTP)**, cadastro, autorização de admin, importação (incl. carga de 1.000 linhas) e paginação.
@@ -90,7 +90,7 @@ src/GestaoEnderecos/
   Services/     Autenticacao, Usuario, Endereco, EnderecoImport, ViaCep, CsvExporter
   Data/         AppDbContext (filtro global + TextoBusca), CurrentUser, DbSeeder
   Models/ ViewModels/ Views/ wwwroot/
-tests/GestaoEnderecos.Tests/   Unit + Integration (85 testes)
+tests/GestaoEnderecos.Tests/   Unit + Integration (86 testes)
 db/scripts/                    DDL
 docs/                          Documentação, evidências e exemplos
 ```

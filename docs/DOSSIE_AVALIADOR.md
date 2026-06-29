@@ -16,8 +16,10 @@
 | **Credenciais de demonstração** | `ana` / `Senha@123` · `bruno` / `Senha@123` |
 | **Stack** | ASP.NET Core MVC (.NET 8 LTS), EF Core 8, SQL Server, Bootstrap 5, xUnit |
 
-> A demo ao vivo roda em uma instância Oracle Cloud (ARM) com SQLite (custo zero); o repositório e
-> o `docker-compose` usam **SQL Server** — o provider é selecionável por configuração, sem alterar o código.
+> A demo ao vivo roda na Oracle Cloud com **SQL Server real** (Azure SQL Edge — o mesmo motor) numa
+> instância x86 separada da aplicação, acessado **só pela rede privada**. O `docker-compose` sobe SQL
+> Server 2022 para rodar localmente; o provider é selecionável por configuração (`Database:Provider`),
+> sem alterar o código. Detalhes em `docs/INFRA-OCI.md`.
 
 ---
 
@@ -112,7 +114,7 @@ Decisões registradas como ADRs no diretório de planejamento do projeto.
 **Quality gates** (rodam a cada build e no CI do GitHub Actions):
 `dotnet format` (estilo) · `dotnet build -warnaserror` (zero avisos) · `dotnet test`.
 
-**Suíte automatizada: 56 testes, 100% verdes.** Cirúrgicos — cada um pega um bug real do escopo.
+**Suíte automatizada: 86 testes, 100% verdes.** Cirúrgicos — cada um pega um bug real do escopo.
 
 ### Testes unitários (42)
 - **Autenticação (5):** senha correta passa; senha incorreta falha; usuário inexistente falha;
@@ -221,16 +223,17 @@ docs/build/chore: README, Docker, CI, ajustes de revisão
 ## 9. Garantias e ressalvas (transparência)
 
 **Garantido, com evidência:**
-- Build sem avisos; **56 testes automatizados passando**.
+- Build sem avisos; **86 testes automatizados passando**.
 - Login, CRUD completo, ViaCEP, CSV e **importação** (inclusive **massiva de 2000 linhas**)
   funcionando **em navegador real** (SQL Server no Docker) e na demo ao vivo.
 - Isolamento entre usuários provado (automatizado + HTTP).
 - `docker compose up` sobe o ambiente completo (SQL Server + app) validado.
-- Repositório público, histórico limpo (working tree sem pendências), 124 arquivos versionados.
+- Repositório público, histórico limpo (working tree sem pendências) com documentação e evidências versionadas.
 
 **Ressalvas honestas (não varridas para baixo do tapete):**
-- A **demo ao vivo** usa **SQLite** e **HTTP** (sem TLS) — escolha de simplicidade/custo; o
-  repositório e o `docker-compose` usam **SQL Server** (entrega fiel ao enunciado).
+- A **demo ao vivo** usa **SQL Server** (Azure SQL Edge — o motor do SQL Server, escolhido por caber
+  em 1 GB de RAM da instância gratuita) sobre **HTTP** (sem TLS) — escolha de simplicidade/custo. Para
+  SQL Server "cheio", basta uma instância com ≥ 2 GB ou o `docker-compose` do repo.
 - A **segurança** é adequada ao escopo de um teste técnico — não é um pentest formal.
 - **Performance/carga** não foi alvo de testes (fora do escopo).
 - A senha do SQL Server no `docker-compose.yml` é de **container local descartável** (padrão em
