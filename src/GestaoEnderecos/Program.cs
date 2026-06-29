@@ -84,14 +84,37 @@ app.MapControllerRoute(
 // script DDL (db/scripts/01-create-tables.sql) ou migrações ao pipeline de implantação.
 if (!app.Environment.IsEnvironment("Testing"))
 {
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.EnsureCreatedAsync();
-    var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<Usuario>>();
-    await DbSeeder.SeedAsync(db, hasher);
+    await InicializarBancoAsync(app);
 }
 
 app.Run();
+
+// Cria o schema e popula os dados de demonstração, com retentativas — no Docker o SQL Server
+// pode levar alguns segundos para aceitar conexões mesmo após o container subir.
+static async Task InicializarBancoAsync(WebApplication app)
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    const int maxTentativas = 12;
+    for (var tentativa = 1; ; tentativa++)
+    {
+        try
+        {
+            await db.Database.EnsureCreatedAsync();
+            var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<Usuario>>();
+            await DbSeeder.SeedAsync(db, hasher);
+            return;
+        }
+        catch (Exception ex) when (tentativa < maxTentativas)
+        {
+            logger.LogWarning(ex, "Banco indisponível (tentativa {Tentativa}/{Max}); aguardando 3s…",
+                tentativa, maxTentativas);
+            await Task.Delay(TimeSpan.FromSeconds(3));
+        }
+    }
+}
 
 // Exposto para os testes de integração (WebApplicationFactory).
 public partial class Program;

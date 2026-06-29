@@ -17,21 +17,31 @@ sênior reconheça pela qualidade e um júnior leia sem esforço.
 > o padrão atual e suportado.
 
 ## Como rodar
+
+### Opção 1 — Docker (recomendado, zero configuração)
+Único pré-requisito: **Docker**. Sobe o SQL Server **e** a aplicação com um comando:
+
+```bash
+docker compose up --build
+```
+Aguarde o SQL Server ficar saudável; a aplicação cria o schema e popula os usuários de
+demonstração automaticamente. Acesse **http://localhost:8080**. Para encerrar: `docker compose down`
+(use `docker compose down -v` para apagar também o volume do banco).
+
+### Opção 2 — .NET SDK local
 Pré-requisitos: **.NET 8 SDK** e **SQL Server** (LocalDB, Express ou container).
 
 ```bash
-# 1. (Opcional) ajustar a connection string — o padrão usa LocalDB.
-#    Em outro servidor, prefira User-Secrets (nunca commitar segredos):
+# (Opcional) ajustar a connection string — o padrão usa LocalDB.
+# Em outro servidor, prefira User-Secrets (nunca commitar segredos):
 cd src/GestaoEnderecos
 dotnet user-secrets init
 dotnet user-secrets set "ConnectionStrings:Default" "Server=SEU_SERVIDOR;Database=GestaoEnderecos;User Id=...;Password=...;TrustServerCertificate=True"
-
-# 2. Rodar
 dotnet run
 ```
 
-Na primeira execução a aplicação **cria o schema e popula dois usuários de demonstração**
-automaticamente. Como alternativa ao passo automático, o schema pode ser criado pelo script
+Em qualquer opção, na primeira execução a aplicação **cria o schema e popula dois usuários de
+demonstração** automaticamente. Como alternativa, o schema pode ser criado pelo script
 [`db/scripts/01-create-tables.sql`](db/scripts/01-create-tables.sql).
 
 ### Credenciais de demonstração
@@ -85,7 +95,7 @@ db/scripts/               DDL das tabelas
 
 ## O que ficou de fora (de propósito)
 Cadastro self-service de usuário (o enunciado pede apenas login; usuários nascem por *seed*),
-recuperação de senha, busca/paginação, Polly/circuit-breaker, Docker. Foco no escopo pedido.
+recuperação de senha, busca/paginação, Polly/circuit-breaker. Foco no escopo pedido.
 
 > Isolamento de dados e proteção de rota são decisões de engenharia derivadas dos critérios de
 > **segurança** da avaliação, não exigências textuais do enunciado.
