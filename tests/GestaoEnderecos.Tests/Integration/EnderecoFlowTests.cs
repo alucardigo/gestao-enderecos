@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.RegularExpressions;
 using GestaoEnderecos.Tests.TestSupport;
 using Microsoft.AspNetCore.Mvc.Testing;
 
@@ -19,7 +20,7 @@ public class EnderecoFlowTests : IClassFixture<GestaoWebAppFactory>
         _factory.Seed();
     }
 
-    private async Task<HttpClient> ClientAutenticadoAsync()
+    private async Task<HttpClient> ClientAutenticadoAsync(string usuario = "ana")
     {
         var client = _factory.CreateClient(
             new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
@@ -29,13 +30,33 @@ public class EnderecoFlowTests : IClassFixture<GestaoWebAppFactory>
         var login = await client.PostAsync("/Account/Login", new FormUrlEncodedContent(
             new Dictionary<string, string>
             {
-                ["Login"] = "ana",
+                ["Login"] = usuario,
                 ["Senha"] = Senha,
                 ["__RequestVerificationToken"] = token,
             }));
 
         Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
         return client;
+    }
+
+    private static async Task<string> CriarEnderecoAsync(HttpClient client, string logradouro)
+    {
+        var form = await client.GetAsync("/Enderecos/Create");
+        var token = HtmlHelpers.ExtractAntiForgeryToken(await form.Content.ReadAsStringAsync());
+        await client.PostAsync("/Enderecos/Create", new FormUrlEncodedContent(
+            new Dictionary<string, string>
+            {
+                ["Cep"] = "40010000",
+                ["Logradouro"] = logradouro,
+                ["Numero"] = "200",
+                ["Bairro"] = "Centro",
+                ["Cidade"] = "Salvador",
+                ["Uf"] = "BA",
+                ["__RequestVerificationToken"] = token,
+            }));
+
+        var html = await (await client.GetAsync("/Enderecos")).Content.ReadAsStringAsync();
+        return Regex.Match(html, $@"data-id=""(\d+)""\s+data-descricao=""{Regex.Escape(logradouro)}").Groups[1].Value;
     }
 
     [Fact]
@@ -95,5 +116,26 @@ public class EnderecoFlowTests : IClassFixture<GestaoWebAppFactory>
         var resposta = await client.GetAsync("/Enderecos/BuscarCep?cep=99999999");
 
         Assert.Equal(HttpStatusCode.NotFound, resposta.StatusCode);
+    }
+
+    [Fact]
+    public async Task Usuario_nao_acessa_endereco_de_outro_via_http()
+    {
+        // Ana cria um endereço e capturamos o id pela listagem.
+        var ana = await ClientAutenticadoAsync("ana");
+        var id = await CriarEnderecoAsync(ana, "Avenida Sete de Ana");
+        Assert.NotEqual(string.Empty, id);
+
+        // Bruno (autenticado) tenta ler e excluir o endereço da Ana via id na URL → 404.
+        var bruno = await ClientAutenticadoAsync("bruno");
+
+        var leitura = await bruno.GetAsync($"/Enderecos/Edit/{id}");
+        Assert.Equal(HttpStatusCode.NotFound, leitura.StatusCode);
+
+        var token = HtmlHelpers.ExtractAntiForgeryToken(
+            await (await bruno.GetAsync("/Enderecos")).Content.ReadAsStringAsync());
+        var exclusao = await bruno.PostAsync($"/Enderecos/Delete/{id}", new FormUrlEncodedContent(
+            new Dictionary<string, string> { ["__RequestVerificationToken"] = token }));
+        Assert.Equal(HttpStatusCode.NotFound, exclusao.StatusCode);
     }
 }

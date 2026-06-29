@@ -1,8 +1,10 @@
+using GestaoEnderecos.Models;
 using GestaoEnderecos.Services;
+using GestaoEnderecos.Tests.TestSupport;
 
 namespace GestaoEnderecos.Tests.Unit;
 
-/// <summary>T6 — normalização do CEP (dado consistente, RN-03).</summary>
+/// <summary>T6 — normalização do CEP/UF (dado consistente, RN-03/RN-05).</summary>
 public class EnderecoServiceTests
 {
     [Theory]
@@ -15,5 +17,37 @@ public class EnderecoServiceTests
     public void NormalizarCep_remove_mascara_e_deixa_apenas_digitos(string? entrada, string esperado)
     {
         Assert.Equal(esperado, EnderecoService.NormalizarCep(entrada));
+    }
+
+    [Fact]
+    public async Task CriarAsync_persiste_cep_sem_mascara_e_uf_em_maiusculas()
+    {
+        using var db = new SqliteTestDb();
+        int idUsuario;
+        await using (var ctx = db.NewContext(0))
+        {
+            var usuario = new Usuario { Nome = "Ana", Login = "ana", SenhaHash = "x" };
+            ctx.Usuarios.Add(usuario);
+            await ctx.SaveChangesAsync();
+            idUsuario = usuario.Id;
+        }
+
+        var criado = await new EnderecoService(db.NewContext(idUsuario), new FakeCurrentUser(idUsuario))
+            .CriarAsync(new Endereco
+            {
+                Cep = "30140-071",
+                Logradouro = "Rua da Bahia",
+                Bairro = "Centro",
+                Cidade = "Belo Horizonte",
+                Uf = "mg",
+                Numero = "1",
+            });
+
+        var relido = await new EnderecoService(db.NewContext(idUsuario), new FakeCurrentUser(idUsuario))
+            .ObterAsync(criado.Id);
+
+        Assert.NotNull(relido);
+        Assert.Equal("30140071", relido!.Cep);
+        Assert.Equal("MG", relido.Uf);
     }
 }

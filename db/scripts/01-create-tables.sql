@@ -69,6 +69,8 @@ BEGIN
             FOREIGN KEY (IdUsuario) REFERENCES dbo.Usuarios (Id)
             ON DELETE CASCADE,   -- espelha DeleteBehavior.Cascade do EF; ver RN-09 (§2.3)
         -- Reforço barato e real no nível de dados: CEP só pode conter dígitos.
+        -- O CHECK pressupõe os 8 dígitos completos (garantidos pela validação da aplicação);
+        -- como Cep é CHAR(8), um valor mais curto seria preenchido com espaços e violaria o CHECK.
         -- (A validação de UF fica na aplicação — ViewModel/Service — para não duplicar
         --  uma lista de 27 valores em dois lugares de manutenção.)
         CONSTRAINT CK_Enderecos_Cep_Digitos

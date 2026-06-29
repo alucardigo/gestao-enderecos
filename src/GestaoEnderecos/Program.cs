@@ -47,7 +47,11 @@ builder.Services
         options.SlidingExpiration = true;
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        // Em produção o cookie de sessão só trafega por HTTPS. Em dev/testes (HTTP local/TestServer)
+        // segue a requisição, para o login funcionar sem HTTPS configurado.
+        options.Cookie.SecurePolicy = builder.Environment.IsProduction()
+            ? CookieSecurePolicy.Always
+            : CookieSecurePolicy.SameAsRequest;
     });
 builder.Services.AddAuthorization();
 
@@ -75,8 +79,9 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Enderecos}/{action=Index}/{id?}");
 
-// Cria o schema (se necessário) e popula dados de demonstração — exceto sob testes,
-// que provisionam o próprio banco SQLite.
+// Conveniência de dev/demo: cria o schema (se necessário) e popula dados de demonstração —
+// exceto sob testes, que provisionam o próprio banco SQLite. Em produção, prefira aplicar o
+// script DDL (db/scripts/01-create-tables.sql) ou migrações ao pipeline de implantação.
 if (!app.Environment.IsEnvironment("Testing"))
 {
     using var scope = app.Services.CreateScope();

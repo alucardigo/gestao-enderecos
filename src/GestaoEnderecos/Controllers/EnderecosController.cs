@@ -79,6 +79,11 @@ public class EnderecosController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, EnderecoFormViewModel model, CancellationToken ct)
     {
+        if (id != model.Id)
+        {
+            return BadRequest();
+        }
+
         if (!ModelState.IsValid)
         {
             return View(model);

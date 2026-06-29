@@ -27,7 +27,7 @@ public class EnderecoService
             .ToListAsync(ct);
 
     public async Task<Endereco?> ObterAsync(int id, CancellationToken ct = default) =>
-        await _db.Enderecos.FirstOrDefaultAsync(e => e.Id == id, ct);
+        await _db.Enderecos.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id, ct);
 
     public async Task<Endereco> CriarAsync(Endereco endereco, CancellationToken ct = default)
     {

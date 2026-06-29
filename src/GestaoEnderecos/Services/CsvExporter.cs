@@ -9,6 +9,13 @@ namespace GestaoEnderecos.Services;
 /// Gera o CSV de endereços. Usa CsvHelper (escaping RFC 4180 resolvido) e grava em UTF-8 com BOM
 /// para que o Excel em pt-BR abra os acentos corretamente.
 /// </summary>
+/// <remarks>
+/// Decisão consciente: NÃO aplicamos defesa contra "CSV formula injection" (prefixar = + - @).
+/// O arquivo contém os próprios endereços do usuário e é aberto por ele — o autor do dado é o
+/// mesmo que o consome —, então o vetor praticamente não se aplica; e prefixar corromperia dados
+/// legítimos (ex.: um complemento "=A" viraria "'=A" visível no Excel). Em um cenário onde o CSV
+/// fosse consumido por terceiros, habilitar InjectionOptions.Escape do CsvHelper seria o caminho.
+/// </remarks>
 public sealed class CsvExporter
 {
     private static readonly string[] Cabecalho =

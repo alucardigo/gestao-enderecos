@@ -10,13 +10,12 @@ namespace GestaoEnderecos.Data;
 /// </summary>
 public class AppDbContext : DbContext
 {
-    private readonly int _currentUserId;
+    private readonly ICurrentUser _currentUser;
 
     public AppDbContext(DbContextOptions<AppDbContext> options, ICurrentUser currentUser)
         : base(options)
     {
-        // Capturado por instância (o contexto é Scoped). O EF reavalia o campo a cada consulta.
-        _currentUserId = currentUser.Id;
+        _currentUser = currentUser;
     }
 
     public DbSet<Usuario> Usuarios => Set<Usuario>();
@@ -61,8 +60,11 @@ public class AppDbContext : DbContext
             e.HasIndex(x => x.IdUsuario).HasDatabaseName("IX_Enderecos_IdUsuario");
 
             // Isolamento por usuário: NENHUMA consulta (list, Find, edição, exclusão) enxerga
-            // endereço de outro usuário. Lê o campo de instância — nunca uma variável capturada.
-            e.HasQueryFilter(x => x.IdUsuario == _currentUserId);
+            // endereço de outro usuário. O filtro lê _currentUser.Id no momento da consulta; o
+            // isolamento correto depende de AppDbContext e ICurrentUser serem Scoped (uma instância
+            // por requisição, criada após a autenticação). Fora de requisição (seed/migração) o Id
+            // é 0 e o filtro não retorna nenhum endereço — seguro, sem NullReferenceException.
+            e.HasQueryFilter(x => x.IdUsuario == _currentUser.Id);
         });
     }
 }

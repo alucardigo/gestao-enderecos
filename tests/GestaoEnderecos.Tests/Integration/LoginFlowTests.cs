@@ -66,12 +66,16 @@ public class LoginFlowTests : IClassFixture<GestaoWebAppFactory>
         Assert.Contains("Credenciais inválidas", await resposta.Content.ReadAsStringAsync());
     }
 
-    [Fact]
-    public async Task Area_logada_redireciona_anonimo_para_o_login()
+    [Theory]
+    [InlineData("/Enderecos")]
+    [InlineData("/Enderecos/Create")]
+    [InlineData("/Enderecos/Exportar")]
+    [InlineData("/Enderecos/BuscarCep?cep=01001000")]
+    public async Task Rotas_protegidas_redirecionam_anonimo_para_o_login(string rota)
     {
         var client = CriarClient();
 
-        var resposta = await client.GetAsync("/Enderecos");
+        var resposta = await client.GetAsync(rota);
 
         Assert.Equal(HttpStatusCode.Redirect, resposta.StatusCode);
         Assert.Contains("/Account/Login", resposta.Headers.Location!.OriginalString);
