@@ -44,6 +44,7 @@ importação por planilha e busca tolerante, mantendo o código limpo e legível
   — atendimento requisito a requisito, segurança, escalabilidade, uso de IA e roadmap.
 - **[Dossiê resumido — PDF](docs/DOSSIE_AVALIADOR.pdf)** · [Markdown](docs/DOSSIE_AVALIADOR.md)
 - **[Ambiente produtivo na Oracle Cloud](docs/INFRA-OCI.md)** — app + SQL Server (Azure SQL Edge) em rede privada
+- **[Board do projeto (registro de atividades)](docs/board-projeto.png)** — quadro estilo Trello da sprint, itens tipados e pontuados
 - **Planejamento:** [requisitos](docs/planejamento/00-requisitos-originais.md) ·
   [plano diretor](docs/planejamento/01-plano-diretor.md) ·
   [ADRs](docs/planejamento/02-decisoes-arquiteturais-adr.md) ·
