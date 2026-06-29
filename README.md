@@ -14,6 +14,16 @@ sênior reconheça pela qualidade e um júnior leia sem esforço.
 > simplicidade e custo zero. O repositório e o `docker-compose` usam **SQL Server** (o provider é
 > selecionável por configuração — `Database:Provider`), mantendo o deliverable fiel ao enunciado.
 
+## Telas
+
+| Login | Lista de endereços |
+|-------|--------------------|
+| ![Login](docs/screenshots/01-login.png) | ![Lista](docs/screenshots/02-lista.png) |
+
+| Autopreenchimento por CEP (foco pula p/ Número) | Confirmação de exclusão |
+|-------------------------------------------------|-------------------------|
+| ![CEP](docs/screenshots/03-cep-autofill.png) | ![Excluir](docs/screenshots/05-modal-exclusao.png) |
+
 ## Stack
 - **.NET 8 LTS** · ASP.NET Core **MVC** (Razor)
 - **Entity Framework Core 8** (Code-First) · **SQL Server**
