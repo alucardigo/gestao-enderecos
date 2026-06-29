@@ -7,6 +7,13 @@ Aplicação web em **C# / ASP.NET Core MVC** para o teste técnico de desenvolve
 Implementa exatamente o escopo proposto — robusto, sem *overengineering*. A meta é um código que um
 sênior reconheça pela qualidade e um júnior leia sem esforço.
 
+## 🌐 Demo ao vivo
+**http://129.151.35.75:8080** — entre com **`ana`** ou **`bruno`** (senha `Senha@123`).
+
+> A demo roda em uma instância Oracle Cloud (ARM) como serviço `systemd`, usando **SQLite** por
+> simplicidade e custo zero. O repositório e o `docker-compose` usam **SQL Server** (o provider é
+> selecionável por configuração — `Database:Provider`), mantendo o deliverable fiel ao enunciado.
+
 ## Stack
 - **.NET 8 LTS** · ASP.NET Core **MVC** (Razor)
 - **Entity Framework Core 8** (Code-First) · **SQL Server**
