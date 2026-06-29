@@ -4,7 +4,10 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace GestaoEnderecos.Tests.Integration;
 
-/// <summary>Cadastro de usuário e autorização da área administrativa (papel Admin).</summary>
+/// <summary>
+/// Autorização da área administrativa e criação de usuários por administrador (não há autocadastro:
+/// novas contas são criadas apenas por um administrador).
+/// </summary>
 public class UsuarioFlowTests : IClassFixture<GestaoWebAppFactory>
 {
     private const string Senha = "Senha@123";
@@ -35,70 +38,64 @@ public class UsuarioFlowTests : IClassFixture<GestaoWebAppFactory>
         return client;
     }
 
-    [Fact]
-    public async Task Registro_cria_conta_e_ja_entra_autenticado()
+    private static async Task<HttpResponseMessage> CriarUsuarioAsync(
+        HttpClient adminClient, string nome, string login, string senha)
     {
-        var client = CriarClient();
-        var pagina = await client.GetAsync("/Account/Register");
-        pagina.EnsureSuccessStatusCode();
-        var token = HtmlHelpers.ExtractAntiForgeryToken(await pagina.Content.ReadAsStringAsync());
-
-        var registro = await client.PostAsync("/Account/Register", new FormUrlEncodedContent(
+        var form = await adminClient.GetAsync("/Usuarios/Create");
+        form.EnsureSuccessStatusCode();
+        var token = HtmlHelpers.ExtractAntiForgeryToken(await form.Content.ReadAsStringAsync());
+        return await adminClient.PostAsync("/Usuarios/Create", new FormUrlEncodedContent(
             new Dictionary<string, string>
             {
-                ["Nome"] = "Carlos Teste",
-                ["Login"] = "carlos",
-                ["Senha"] = "Senha@123",
-                ["ConfirmarSenha"] = "Senha@123",
+                ["Nome"] = nome,
+                ["Login"] = login,
+                ["Senha"] = senha,
                 ["__RequestVerificationToken"] = token,
             }));
-        Assert.Equal(HttpStatusCode.Redirect, registro.StatusCode);
-
-        // Já autenticado: a área logada responde 200 (não redireciona para o login).
-        var area = await client.GetAsync(registro.Headers.Location!.OriginalString);
-        Assert.Equal(HttpStatusCode.OK, area.StatusCode);
     }
 
     [Fact]
-    public async Task Registro_rejeita_login_ja_existente()
+    public async Task Nao_existe_rota_publica_de_autocadastro()
     {
         var client = CriarClient();
-        var pagina = await client.GetAsync("/Account/Register");
-        var token = HtmlHelpers.ExtractAntiForgeryToken(await pagina.Content.ReadAsStringAsync());
 
-        var registro = await client.PostAsync("/Account/Register", new FormUrlEncodedContent(
-            new Dictionary<string, string>
-            {
-                ["Nome"] = "Outra Ana",
-                ["Login"] = "ana", // já existe (seed)
-                ["Senha"] = "Senha@123",
-                ["ConfirmarSenha"] = "Senha@123",
-                ["__RequestVerificationToken"] = token,
-            }));
+        var resposta = await client.GetAsync("/Account/Register");
 
-        Assert.Equal(HttpStatusCode.OK, registro.StatusCode); // volta com erro
-        Assert.Contains("Já existe um usuário", await registro.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.NotFound, resposta.StatusCode);
     }
 
     [Fact]
-    public async Task Registro_rejeita_senha_fraca()
+    public async Task Admin_cria_novo_usuario()
     {
-        var client = CriarClient();
-        var pagina = await client.GetAsync("/Account/Register");
-        var token = HtmlHelpers.ExtractAntiForgeryToken(await pagina.Content.ReadAsStringAsync());
+        var ana = await LogarAsync("ana");
 
-        var registro = await client.PostAsync("/Account/Register", new FormUrlEncodedContent(
-            new Dictionary<string, string>
-            {
-                ["Nome"] = "Fraco",
-                ["Login"] = "fraco",
-                ["Senha"] = "123456",
-                ["ConfirmarSenha"] = "123456",
-                ["__RequestVerificationToken"] = token,
-            }));
+        var resposta = await CriarUsuarioAsync(ana, "Carlos Teste", "carlos", "Senha@123");
 
-        Assert.Equal(HttpStatusCode.OK, registro.StatusCode); // volta com erro de validação
-        Assert.Contains("8 caracteres", await registro.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.Redirect, resposta.StatusCode);
+        var lista = await (await ana.GetAsync("/Usuarios")).Content.ReadAsStringAsync();
+        Assert.Contains("Carlos Teste", lista);
+    }
+
+    [Fact]
+    public async Task Admin_create_rejeita_senha_fraca()
+    {
+        var ana = await LogarAsync("ana");
+
+        var resposta = await CriarUsuarioAsync(ana, "Fraco", "fraco", "123456");
+
+        Assert.Equal(HttpStatusCode.OK, resposta.StatusCode); // volta com erro de validação
+        Assert.Contains("8 caracteres", await resposta.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Admin_create_rejeita_login_duplicado()
+    {
+        var ana = await LogarAsync("ana");
+
+        var resposta = await CriarUsuarioAsync(ana, "Outro Bruno", "bruno", "Senha@123");
+
+        Assert.Equal(HttpStatusCode.OK, resposta.StatusCode);
+        Assert.Contains("Já existe um usuário", await resposta.Content.ReadAsStringAsync());
     }
 
     [Fact]

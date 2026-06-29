@@ -58,41 +58,6 @@ public class AccountController : Controller
             : RedirectToAction("Index", "Enderecos");
     }
 
-    [HttpGet]
-    [AllowAnonymous]
-    public IActionResult Register()
-    {
-        if (User.Identity?.IsAuthenticated == true)
-        {
-            return RedirectToAction("Index", "Enderecos");
-        }
-
-        return View(new RegisterViewModel());
-    }
-
-    [HttpPost]
-    [AllowAnonymous]
-    [EnableRateLimiting("login")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Register(RegisterViewModel model, CancellationToken ct)
-    {
-        if (!ModelState.IsValid)
-        {
-            return View(model);
-        }
-
-        var resultado = await _usuarios.CriarAsync(model.Nome, model.Login, model.Senha, isAdmin: false, ct);
-        if (!resultado.Ok)
-        {
-            ModelState.AddModelError(nameof(model.Login), resultado.Erro!);
-            return View(model);
-        }
-
-        await SignInAsync(resultado.Usuario!, isPersistent: false);
-        TempData["Sucesso"] = "Conta criada com sucesso. Bem-vindo!";
-        return RedirectToAction("Index", "Enderecos");
-    }
-
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()

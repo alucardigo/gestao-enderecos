@@ -57,7 +57,9 @@ public class EnderecoFlowTests : IClassFixture<GestaoWebAppFactory>
                 ["__RequestVerificationToken"] = token,
             }));
 
-        var html = await (await client.GetAsync("/Enderecos")).Content.ReadAsStringAsync();
+        // Usa a busca para localizar o endereço recém-criado (a lista é paginada).
+        var html = await (await client.GetAsync($"/Enderecos?q={Uri.EscapeDataString(logradouro)}"))
+            .Content.ReadAsStringAsync();
         return Regex.Match(html, $@"data-id=""(\d+)""\s+data-descricao=""{Regex.Escape(logradouro)}").Groups[1].Value;
     }
 

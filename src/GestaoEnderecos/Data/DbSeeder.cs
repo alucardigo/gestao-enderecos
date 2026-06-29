@@ -29,28 +29,14 @@ public static class DbSeeder
         db.Usuarios.AddRange(ana, bruno);
         await db.SaveChangesAsync(ct);
 
-        db.Enderecos.AddRange(
-            new Endereco
-            {
-                Cep = "01001000",
-                Logradouro = "Praça da Sé",
-                Bairro = "Sé",
-                Cidade = "São Paulo",
-                Uf = "SP",
-                Numero = "100",
-                IdUsuario = ana.Id,
-            },
-            new Endereco
-            {
-                Cep = "20040002",
-                Logradouro = "Rua da Assembleia",
-                Complemento = "Sala 2",
-                Bairro = "Centro",
-                Cidade = "Rio de Janeiro",
-                Uf = "RJ",
-                Numero = "50",
-                IdUsuario = bruno.Id,
-            });
+        // Endereços reais distribuídos entre os dois usuários de demonstração.
+        var enderecos = EnderecosDemo.Lista();
+        for (var i = 0; i < enderecos.Count; i++)
+        {
+            enderecos[i].IdUsuario = i % 2 == 0 ? ana.Id : bruno.Id;
+        }
+
+        db.Enderecos.AddRange(enderecos);
         await db.SaveChangesAsync(ct);
     }
 }
