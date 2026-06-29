@@ -54,6 +54,7 @@ public class AppDbContext : DbContext
             e.Property(x => x.Cidade).HasMaxLength(80).IsRequired();
             e.Property(x => x.Uf).HasColumnType("char(2)").IsRequired();
             e.Property(x => x.Numero).HasMaxLength(15).IsRequired();
+            e.Property(x => x.TextoBusca).HasMaxLength(400);
             e.HasOne(x => x.Usuario)
                 .WithMany(u => u.Enderecos)
                 .HasForeignKey(x => x.IdUsuario)
@@ -70,5 +71,30 @@ public class AppDbContext : DbContext
             // é 0 e o filtro não retorna nenhum endereço — seguro, sem NullReferenceException.
             e.HasQueryFilter(x => x.IdUsuario == _currentUser.Id);
         });
+    }
+
+    public override int SaveChanges()
+    {
+        AtualizarTextoBusca();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        AtualizarTextoBusca();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    // Mantém o campo de busca normalizado coerente em qualquer caminho de gravação
+    // (cadastro, edição, seed, importação) — sem depender de cada chamador lembrar.
+    private void AtualizarTextoBusca()
+    {
+        foreach (var entry in ChangeTracker.Entries<Endereco>())
+        {
+            if (entry.State is EntityState.Added or EntityState.Modified)
+            {
+                entry.Entity.TextoBusca = TextoNormalizado.Para(entry.Entity);
+            }
+        }
     }
 }

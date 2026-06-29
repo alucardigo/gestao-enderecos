@@ -34,32 +34,73 @@ public class EnderecoService
             .OrderBy(e => e.Cidade).ThenBy(e => e.Logradouro)
             .ToListAsync(ct);
 
-    /// <summary>Lista paginada com busca opcional (logradouro, cidade, bairro ou CEP).</summary>
+    // Limite de candidatos avaliados na busca aproximada (mantém o custo controlado).
+    private const int MaxCandidatosFuzzy = 5000;
+
+    /// <summary>
+    /// Lista paginada com busca tolerante. A busca é normalizada (ignora maiúsculas e acentos);
+    /// se a busca exata por substring não retornar nada, cai para uma busca aproximada que tolera
+    /// erros de digitação (Damerau-Levenshtein) — assim "RUA", "rua" e "rau" encontram "Rua".
+    /// </summary>
     public async Task<PaginaEnderecos> ListarPaginadoAsync(
         string? busca, int pagina, int tamanho, CancellationToken ct = default)
     {
         if (pagina < 1) pagina = 1;
         if (tamanho < 1) tamanho = 10;
 
-        var query = _db.Enderecos.AsNoTracking();
-        var termo = busca?.Trim();
-        if (!string.IsNullOrEmpty(termo))
+        var termo = TextoNormalizado.Normalizar(busca);
+        var baseQuery = _db.Enderecos.AsNoTracking();
+
+        // Sem busca: paginação simples.
+        if (string.IsNullOrEmpty(termo))
         {
-            query = query.Where(e =>
-                e.Logradouro.Contains(termo) ||
-                e.Cidade.Contains(termo) ||
-                e.Bairro.Contains(termo) ||
-                e.Cep.Contains(termo));
+            return await PaginarAsync(baseQuery, busca, pagina, tamanho, ct);
         }
 
+        // 1) Busca por substring no texto normalizado (case/acento-insensível).
+        var filtrada = baseQuery.Where(e => e.TextoBusca.Contains(termo));
+        if (await filtrada.AnyAsync(ct))
+        {
+            return await PaginarAsync(filtrada, busca, pagina, tamanho, ct);
+        }
+
+        // 2) Fallback aproximado (tolera erros de digitação), avaliado em memória e limitado.
+        if (termo.Length < 3)
+        {
+            return new PaginaEnderecos([], 0, pagina, tamanho, busca);
+        }
+
+        var limiar = termo.Length <= 4 ? 1 : 2;
+        var candidatos = await baseQuery
+            .Select(e => new { e.Id, e.TextoBusca })
+            .Take(MaxCandidatosFuzzy)
+            .ToListAsync(ct);
+
+        var idsRanqueados = candidatos
+            .Select(c => new { c.Id, Dist = Similaridade.MenorDistanciaPorToken(c.TextoBusca, termo) })
+            .Where(x => x.Dist <= limiar)
+            .OrderBy(x => x.Dist).ThenBy(x => x.Id)
+            .Select(x => x.Id)
+            .ToList();
+
+        var total = idsRanqueados.Count;
+        var idsPagina = idsRanqueados.Skip((pagina - 1) * tamanho).Take(tamanho).ToList();
+        var itensPagina = await baseQuery.Where(e => idsPagina.Contains(e.Id)).ToListAsync(ct);
+        var ordenados = itensPagina.OrderBy(e => idsPagina.IndexOf(e.Id)).ToList();
+
+        return new PaginaEnderecos(ordenados, total, pagina, tamanho, busca);
+    }
+
+    private static async Task<PaginaEnderecos> PaginarAsync(
+        IQueryable<Endereco> query, string? busca, int pagina, int tamanho, CancellationToken ct)
+    {
         var total = await query.CountAsync(ct);
         var itens = await query
             .OrderBy(e => e.Cidade).ThenBy(e => e.Logradouro)
             .Skip((pagina - 1) * tamanho)
             .Take(tamanho)
             .ToListAsync(ct);
-
-        return new PaginaEnderecos(itens, total, pagina, tamanho, termo);
+        return new PaginaEnderecos(itens, total, pagina, tamanho, busca);
     }
 
     public async Task<Endereco?> ObterAsync(int id, CancellationToken ct = default) =>

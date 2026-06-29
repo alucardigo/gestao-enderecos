@@ -28,5 +28,11 @@ public class Endereco
 
     public int IdUsuario { get; set; }
 
+    /// <summary>
+    /// Texto normalizado (minúsculo, sem acentos) para busca tolerante. Mantido automaticamente
+    /// pelo <see cref="Data.AppDbContext"/> ao salvar — não preencher manualmente.
+    /// </summary>
+    public string TextoBusca { get; set; } = string.Empty;
+
     public Usuario? Usuario { get; set; }
 }

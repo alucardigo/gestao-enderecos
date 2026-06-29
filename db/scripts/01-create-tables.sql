@@ -65,6 +65,7 @@ BEGIN
         Uf          CHAR(2)        NOT NULL,
         Numero      NVARCHAR(15)   NOT NULL,            -- texto: "S/N", "10A"
         IdUsuario   INT            NOT NULL,
+        TextoBusca  NVARCHAR(400)  NOT NULL CONSTRAINT DF_Enderecos_TextoBusca DEFAULT(''),  -- busca normalizada
         CONSTRAINT PK_Enderecos PRIMARY KEY CLUSTERED (Id),
         CONSTRAINT FK_Enderecos_Usuarios
             FOREIGN KEY (IdUsuario) REFERENCES dbo.Usuarios (Id)

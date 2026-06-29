@@ -57,6 +57,90 @@ public class EnderecoServiceTests
         Assert.Equal(5, busca.Total);
     }
 
+    private static async Task<(SqliteTestDb Db, int Uid)> BancoComEnderecoAsync(Endereco endereco)
+    {
+        var db = new SqliteTestDb();
+        int uid;
+        await using (var ctx = db.NewContext(0))
+        {
+            var u = new Usuario { Nome = "Ana", Login = "ana", SenhaHash = "x" };
+            ctx.Usuarios.Add(u);
+            await ctx.SaveChangesAsync();
+            uid = u.Id;
+        }
+
+        await new EnderecoService(db.NewContext(uid), new FakeCurrentUser(uid)).CriarAsync(endereco);
+        return (db, uid);
+    }
+
+    [Theory]
+    [InlineData("rua")]   // minúscula — o dado tem "Rua" (no SQLite o LIKE é sensível a caixa!)
+    [InlineData("RUA")]   // maiúscula
+    [InlineData("Rua")]   // exata
+    [InlineData("rau")]   // erro de digitação (transposição)
+    [InlineData("flores")]
+    public async Task Busca_tolera_caixa_e_erros_de_digitacao(string termo)
+    {
+        var (db, uid) = await BancoComEnderecoAsync(new Endereco
+        {
+            Cep = "01001000",
+            Logradouro = "Rua das Flores",
+            Bairro = "Centro",
+            Cidade = "São Paulo",
+            Uf = "SP",
+            Numero = "10",
+        });
+        using var _ = db;
+
+        var r = await new EnderecoService(db.NewContext(uid), new FakeCurrentUser(uid))
+            .ListarPaginadoAsync(termo, 1, 10);
+
+        Assert.Equal(1, r.Total);
+    }
+
+    [Theory]
+    [InlineData("sao paulo")] // sem acento — o dado tem "São Paulo"
+    [InlineData("SÃO")]
+    [InlineData("são paulo")]
+    public async Task Busca_ignora_acentos(string termo)
+    {
+        var (db, uid) = await BancoComEnderecoAsync(new Endereco
+        {
+            Cep = "01001000",
+            Logradouro = "Avenida Central",
+            Bairro = "Centro",
+            Cidade = "São Paulo",
+            Uf = "SP",
+            Numero = "10",
+        });
+        using var _ = db;
+
+        var r = await new EnderecoService(db.NewContext(uid), new FakeCurrentUser(uid))
+            .ListarPaginadoAsync(termo, 1, 10);
+
+        Assert.Equal(1, r.Total);
+    }
+
+    [Fact]
+    public async Task Busca_sem_correspondencia_retorna_vazio()
+    {
+        var (db, uid) = await BancoComEnderecoAsync(new Endereco
+        {
+            Cep = "01001000",
+            Logradouro = "Rua das Flores",
+            Bairro = "Centro",
+            Cidade = "São Paulo",
+            Uf = "SP",
+            Numero = "10",
+        });
+        using var _ = db;
+
+        var r = await new EnderecoService(db.NewContext(uid), new FakeCurrentUser(uid))
+            .ListarPaginadoAsync("xyzklmnop", 1, 10);
+
+        Assert.Equal(0, r.Total);
+    }
+
     [Fact]
     public async Task CriarAsync_persiste_cep_sem_mascara_e_uf_em_maiusculas()
     {
