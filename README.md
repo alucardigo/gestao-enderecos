@@ -1,138 +1,114 @@
 # Gestão de Endereços
 
-Aplicação web em **C# / ASP.NET Core MVC** para o teste técnico de desenvolvedor. Permite
+Aplicação web em **C# / ASP.NET Core MVC** para o teste técnico de desenvolvedor (AeC). Permite
 **login**, **gerenciar um CRUD de endereços** (cadastro manual ou **autopreenchimento por CEP via
-[ViaCEP](https://viacep.com.br/)**) e **exportar os endereços para CSV**.
-
-> Como **extra** (além do enunciado), há também **importação de endereços via planilha CSV** com
-> validação por linha — importa as válidas e reporta as inválidas com a linha e o motivo.
-> Veja a planilha de exemplo em [`docs/exemplos/`](docs/exemplos/).
-
-Implementa exatamente o escopo proposto — robusto, sem *overengineering*. A meta é um código que um
-sênior reconheça pela qualidade e um júnior leia sem esforço.
+[ViaCEP](https://viacep.com.br/)**) e **exportar para CSV** — e vai além, com gestão de usuários,
+importação por planilha e busca tolerante, mantendo o código limpo e legível.
 
 ## 🌐 Demo ao vivo
-**http://129.151.35.75:8080** — entre com **`ana`** ou **`bruno`** (senha `Senha@123`).
+**http://129.151.35.75:8080** — entre com **`ana`** (administrador) ou **`bruno`** · senha `Senha@123`.
 
 > A demo roda em uma instância Oracle Cloud (ARM) como serviço `systemd`, usando **SQLite** por
-> simplicidade e custo zero. O repositório e o `docker-compose` usam **SQL Server** (o provider é
-> selecionável por configuração — `Database:Provider`), mantendo o deliverable fiel ao enunciado.
+> simplicidade/custo. O repositório e o `docker-compose` usam **SQL Server** (provider selecionável
+> por configuração — `Database:Provider`), mantendo a entrega fiel ao enunciado.
+
+## Funcionalidades
+- **Autenticação** por cookie + **cadastro** de conta (auto-serviço).
+- **CRUD de endereços** por usuário, com **isolamento de dados** garantido por construção.
+- **Autopreenchimento por CEP** (ViaCEP, com *cache* e degradação graciosa).
+- **Busca tolerante** — ignora **maiúsculas e acentos** e tolera **erros de digitação**
+  (ex.: `rua`, `RUA` e `rau` encontram "Rua"; `praca` encontra "Praça").
+- **Paginação** da listagem (escala para milhares de registros).
+- **Exportação CSV** (UTF-8 com BOM) e **importação CSV** com validação por linha + **modelo** para baixar.
+- **Gestão de usuários** (área administrativa): perfil, troca de senha, e CRUD de usuários com
+  redefinição de senha (papel **Admin**).
+- **Segurança**: rate limiting no login, política de senha forte, cabeçalhos de segurança (CSP etc.).
 
 ## Telas
+| Login | Lista com busca e paginação |
+|-------|-----------------------------|
+| ![Login](docs/screenshots/01-login.png) | ![Lista](docs/screenshots/13-paginacao.png) |
 
-| Login | Lista de endereços |
-|-------|--------------------|
-| ![Login](docs/screenshots/01-login.png) | ![Lista](docs/screenshots/02-lista.png) |
+| Autopreenchimento por CEP (foco pula p/ Número) | Busca tolerante (ignora acento/caixa/typo) |
+|-------------------------------------------------|--------------------------------------------|
+| ![CEP](docs/screenshots/03-cep-autofill.png) | ![Busca](docs/screenshots/14-busca-acento.png) |
 
-| Autopreenchimento por CEP (foco pula p/ Número) | Confirmação de exclusão |
-|-------------------------------------------------|-------------------------|
-| ![CEP](docs/screenshots/03-cep-autofill.png) | ![Excluir](docs/screenshots/05-modal-exclusao.png) |
+| Importação CSV (válidas/inválidas com motivo) | Área administrativa de usuários |
+|-----------------------------------------------|--------------------------------|
+| ![Import](docs/screenshots/08-import-relatorio.png) | ![Admin](docs/screenshots/11-admin-usuarios.png) |
 
-**Importação CSV — válidas importadas, inválidas reportadas com linha e motivo**
-
-![Importação](docs/screenshots/08-import-relatorio.png)
-
-| Menu do usuário | Área administrativa de usuários |
-|-----------------|--------------------------------|
-| ![Menu](docs/screenshots/10-menu-usuario.png) | ![Admin](docs/screenshots/11-admin-usuarios.png) |
-
-**Listagem com busca e paginação (em escala)**
-
-![Paginação](docs/screenshots/13-paginacao.png)
+## 📚 Documentação
+- **[Defesa técnica (estilo TCC) — PDF](docs/TCC_DEFESA_TECNICA.pdf)** · [versão Markdown](docs/TCC_DEFESA_TECNICA.md)
+  — atendimento requisito a requisito, segurança, escalabilidade, uso de IA e roadmap.
+- **[Dossiê resumido — PDF](docs/DOSSIE_AVALIADOR.pdf)** · [Markdown](docs/DOSSIE_AVALIADOR.md)
+- **Planejamento:** [requisitos](docs/planejamento/00-requisitos-originais.md) ·
+  [plano diretor](docs/planejamento/01-plano-diretor.md) ·
+  [ADRs](docs/planejamento/02-decisoes-arquiteturais-adr.md) ·
+  [backlog](docs/planejamento/03-backlog-execucao.md)
+- **Evidências** (capturas de validação): [`docs/evidencias/`](docs/evidencias/)
+- **Planilha de exemplo p/ importação:** [`docs/exemplos/`](docs/exemplos/)
 
 ## Stack
-- **.NET 8 LTS** · ASP.NET Core **MVC** (Razor)
-- **Entity Framework Core 8** (Code-First) · **SQL Server**
-- **Bootstrap 5** · **JavaScript vanilla** (sem framework de front)
+- **.NET 8 LTS** · ASP.NET Core **MVC** (Razor) · **EF Core 8** (Code-First) · **SQL Server** (SQLite opcional)
+- **Bootstrap 5** · **JavaScript vanilla** · **CsvHelper**
 - Testes: **xUnit** · **Moq** · **SQLite in-memory** · `WebApplicationFactory`
 
-> A sugestão "ASP.NET MVC" do enunciado foi interpretada como **ASP.NET Core MVC (.NET 8 LTS)**,
-> o padrão atual e suportado.
+> A sugestão "ASP.NET MVC" do enunciado foi interpretada como **ASP.NET Core MVC (.NET 8 LTS)**.
 
 ## Como rodar
-
-### Opção 1 — Docker (recomendado, zero configuração)
-Único pré-requisito: **Docker**. Sobe o SQL Server **e** a aplicação com um comando:
-
+**Docker (recomendado — sobe SQL Server + app):**
 ```bash
-docker compose up --build
+docker compose up --build      # http://localhost:8080
 ```
-Aguarde o SQL Server ficar saudável; a aplicação cria o schema e popula os usuários de
-demonstração automaticamente. Acesse **http://localhost:8080**. Para encerrar: `docker compose down`
-(use `docker compose down -v` para apagar também o volume do banco).
-
-### Opção 2 — .NET SDK local
-Pré-requisitos: **.NET 8 SDK** e **SQL Server** (LocalDB, Express ou container).
-
+**.NET SDK local (SQL Server LocalDB/Express/container):**
 ```bash
-# (Opcional) ajustar a connection string — o padrão usa LocalDB.
-# Em outro servidor, prefira User-Secrets (nunca commitar segredos):
-cd src/GestaoEnderecos
-dotnet user-secrets init
-dotnet user-secrets set "ConnectionStrings:Default" "Server=SEU_SERVIDOR;Database=GestaoEnderecos;User Id=...;Password=...;TrustServerCertificate=True"
-dotnet run
+cd src/GestaoEnderecos && dotnet run
 ```
-
-Em qualquer opção, na primeira execução a aplicação **cria o schema e popula dois usuários de
-demonstração** automaticamente. Como alternativa, o schema pode ser criado pelo script
-[`db/scripts/01-create-tables.sql`](db/scripts/01-create-tables.sql).
-
-### Credenciais de demonstração
-Dois usuários (para você ver o **isolamento de dados** funcionando entre contas):
-
-| Usuário | Senha       |
-|---------|-------------|
-| `ana`   | `Senha@123` |
-| `bruno` | `Senha@123` |
+Na primeira execução o schema é criado e dois usuários de demonstração são populados. Alternativa:
+executar [`db/scripts/01-create-tables.sql`](db/scripts/01-create-tables.sql).
 
 ## Testes
 ```bash
 dotnet test
 ```
-São **36 testes** cirúrgicos cobrindo o que tem risco real: hashing de senha, normalização de
-CEP, integração ViaCEP (sucesso, CEP inexistente, timeout/erro), geração de CSV (escaping/BOM),
-**isolamento entre usuários (leitura e escrita)** e o **fluxo autenticado ponta a ponta**
-(login → criar → listar → exportar) via `WebApplicationFactory`.
+**85 testes** cirúrgicos: hashing e política de senha, normalização de CEP/UF, integração ViaCEP
+(sucesso/erro/timeout), CSV (escaping/BOM) e *round-trip* export↔import, **busca tolerante
+(caixa/acento/typo) em SQLite**, **isolamento entre usuários (leitura e escrita, por serviço e por
+HTTP)**, cadastro, autorização de admin, importação (incl. carga de 1.000 linhas) e paginação.
 
 ## Banco de dados
-O script de criação das tabelas (entregável do teste) está em
-[`db/scripts/01-create-tables.sql`](db/scripts/01-create-tables.sql). É a fonte de verdade
-entregue; o EF Core Code-First é usado no desenvolvimento.
+DDL entregue em [`db/scripts/01-create-tables.sql`](db/scripts/01-create-tables.sql) (fonte de
+verdade da estrutura). O EF Core Code-First é usado no desenvolvimento.
 
 ## Estrutura
 ```
-src/GestaoEnderecos/      Aplicação MVC
-  Controllers/            Account (login), Enderecos (CRUD + CEP + CSV), Home (erros)
-  Services/               AutenticacaoService, EnderecoService, ViaCepService, CsvExporter
-  Data/                   AppDbContext (+ filtro global), CurrentUser, DbSeeder
+src/GestaoEnderecos/
+  Controllers/  Account (login/cadastro/perfil), Enderecos (CRUD+CEP+CSV+import), Usuarios (admin), Home
+  Services/     Autenticacao, Usuario, Endereco, EnderecoImport, ViaCep, CsvExporter
+  Data/         AppDbContext (filtro global + TextoBusca), CurrentUser, DbSeeder
   Models/ ViewModels/ Views/ wwwroot/
-tests/GestaoEnderecos.Tests/  Unit + Integration
-db/scripts/               DDL das tabelas
+tests/GestaoEnderecos.Tests/   Unit + Integration (85 testes)
+db/scripts/                    DDL
+docs/                          Documentação, evidências e exemplos
 ```
 
-## Decisões de arquitetura
-- **Monólito bem organizado** (um projeto MVC, pastas por responsabilidade) em vez de Clean
-  Architecture multi-projeto: para duas entidades e uma integração, o EF Core já é o repositório;
-  abstrair por cima seria cerimônia que esconde o código.
-- **`PasswordHasher` nativo** (PBKDF2, do *shared framework* — sem o ASP.NET Core Identity completo):
-  segurança correta sem reinventar criptografia.
-- **Isolamento por usuário via *EF Global Query Filter***: nenhuma consulta enxerga endereço de
-  outro usuário — inclusive em editar/excluir — tornando o vazamento (IDOR) impossível por
-  construção, não por disciplina.
-- **ViaCEP por endpoint interno** (typed `HttpClient`, async, *timeout* 5s) com degradação graciosa:
-  se a API falhar, o cadastro manual continua possível.
-- **CSV com CsvHelper** (UTF-8 com BOM para o Excel pt-BR): mesma régua de "não reinventar o que
-  já está resolvido".
-- **Erros**: página amigável em produção (`UseExceptionHandler`) + `UseStatusCodePagesWithReExecute`
-  para 404; em desenvolvimento, a página detalhada do framework.
+## Decisões de arquitetura (resumo — detalhes nos ADRs)
+- **Monólito bem organizado** em vez de Clean Architecture multi-projeto (o EF Core já é o repositório).
+- **`PasswordHasher` nativo** (PBKDF2) — segurança sem reinventar criptografia.
+- **Isolamento por usuário via *EF Global Query Filter*** — IDOR impossível por construção.
+- **Busca normalizada** (`TextoBusca` minúsculo/sem acento, mantido no `SaveChanges`) + fallback
+  **Damerau-Levenshtein** para typos — porque o `LIKE` do SQLite é sensível a caixa/acento.
+- **ViaCEP por endpoint interno** com *cache*; **CSV com CsvHelper** (UTF-8+BOM).
 
-## O que ficou de fora (de propósito)
-Cadastro self-service de usuário (o enunciado pede apenas login; usuários nascem por *seed*),
-recuperação de senha, busca/paginação, Polly/circuit-breaker. Foco no escopo pedido.
+## Segurança (resumo — capítulo completo no TCC)
+PBKDF2 para senhas; rate limiting no login; política de senha forte (≥8, 3 classes); CSRF
+(antiforgery) em todas as mutações; XSS (encoding do Razor + CSP); SQL injection (EF parametrizado);
+cabeçalhos de segurança (CSP, nosniff, X-Frame-Options, Referrer-Policy); isolamento por usuário.
 
-> Isolamento de dados e proteção de rota são decisões de engenharia derivadas dos critérios de
-> **segurança** da avaliação, não exigências textuais do enunciado.
+## O que ficou de fora (de propósito, com roadmap no TCC)
+EF Migrations (usa `EnsureCreated` para simplicidade), lockout persistente por usuário, verificação
+contra senhas vazadas, observabilidade, HTTPS+domínio na demo, *streaming*/bulk para milhões de linhas.
 
 ## Convenções de commit
-Um commit por funcionalidade (login, CRUD, ViaCEP, CSV), além de commits de suporte (scaffold,
-docs). O histórico conta a construção do produto.
+Um commit por funcionalidade, além de commits de suporte (scaffold, docs, segurança). O histórico
+conta a construção do produto.
