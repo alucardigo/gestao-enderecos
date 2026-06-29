@@ -38,7 +38,7 @@ public sealed class CsvExporter
 
             foreach (var e in enderecos)
             {
-                csv.WriteField(FormatarCep(e.Cep));
+                csv.WriteField(Cep.Formatar(e.Cep));
                 csv.WriteField(e.Logradouro);
                 csv.WriteField(e.Numero);
                 csv.WriteField(e.Complemento ?? string.Empty); // vazio é campo vazio, nunca "null"
@@ -67,7 +67,4 @@ public sealed class CsvExporter
                 Complemento = "Sala 2", Bairro = "Centro", Cidade = "Rio de Janeiro", Uf = "RJ",
             },
         ]);
-
-    private static string FormatarCep(string? cep) =>
-        cep is { Length: 8 } ? $"{cep[..5]}-{cep[5..]}" : cep ?? string.Empty;
 }

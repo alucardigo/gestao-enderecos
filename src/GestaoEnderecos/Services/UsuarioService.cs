@@ -14,6 +14,8 @@ public sealed record OperacaoUsuario(bool Ok, string? Erro = null, Usuario? Usua
 /// </summary>
 public class UsuarioService
 {
+    private const string LoginDuplicado = "Já existe um usuário com esse login.";
+
     private readonly AppDbContext _db;
     private readonly IPasswordHasher<Usuario> _hasher;
 
@@ -38,7 +40,7 @@ public class UsuarioService
         login = NormalizarLogin(login);
         if (await _db.Usuarios.AnyAsync(u => u.Login == login, ct))
         {
-            return new OperacaoUsuario(false, "Já existe um usuário com esse login.");
+            return new OperacaoUsuario(false, LoginDuplicado);
         }
 
         var usuario = new Usuario { Nome = nome.Trim(), Login = login, IsAdmin = isAdmin };
@@ -60,7 +62,7 @@ public class UsuarioService
         login = NormalizarLogin(login);
         if (await _db.Usuarios.AnyAsync(u => u.Login == login && u.Id != id, ct))
         {
-            return new OperacaoUsuario(false, "Já existe um usuário com esse login.");
+            return new OperacaoUsuario(false, LoginDuplicado);
         }
 
         usuario.Nome = nome.Trim();

@@ -34,6 +34,9 @@ public class EnderecoService
             .OrderBy(e => e.Cidade).ThenBy(e => e.Logradouro)
             .ToListAsync(ct);
 
+    /// <summary>Tamanho padrão da página na listagem.</summary>
+    public const int TamanhoPaginaPadrao = 10;
+
     // Limite de candidatos avaliados na busca aproximada (mantém o custo controlado).
     private const int MaxCandidatosFuzzy = 5000;
 
@@ -46,7 +49,7 @@ public class EnderecoService
         string? busca, int pagina, int tamanho, CancellationToken ct = default)
     {
         if (pagina < 1) pagina = 1;
-        if (tamanho < 1) tamanho = 10;
+        if (tamanho < 1) tamanho = TamanhoPaginaPadrao;
 
         var termo = TextoNormalizado.Normalizar(busca);
         var baseQuery = _db.Enderecos.AsNoTracking();
@@ -72,6 +75,7 @@ public class EnderecoService
 
         var limiar = termo.Length <= 4 ? 1 : 2;
         var candidatos = await baseQuery
+            .OrderBy(e => e.Id) // amostra determinística ao limitar os candidatos
             .Select(e => new { e.Id, e.TextoBusca })
             .Take(MaxCandidatosFuzzy)
             .ToListAsync(ct);
@@ -153,11 +157,7 @@ public class EnderecoService
     /// <summary>Mantém o dado consistente: CEP só com dígitos, UF em maiúsculas.</summary>
     private static void Normalizar(Endereco endereco)
     {
-        endereco.Cep = NormalizarCep(endereco.Cep);
+        endereco.Cep = Cep.Normalizar(endereco.Cep);
         endereco.Uf = (endereco.Uf ?? string.Empty).Trim().ToUpperInvariant();
     }
-
-    /// <summary>Remove máscara do CEP, deixando apenas os dígitos (ex.: "01001-000" → "01001000").</summary>
-    public static string NormalizarCep(string? cep) =>
-        new([.. (cep ?? string.Empty).Where(char.IsDigit)]);
 }

@@ -8,6 +8,13 @@ namespace GestaoEnderecos.ViewModels;
 /// </summary>
 public sealed class SenhaForteAttribute : ValidationAttribute
 {
+    public const string Mensagem =
+        "A senha deve ter ao menos 8 caracteres, com 3 dos 4 tipos: maiúsculas, minúsculas, números e símbolos.";
+
+    public SenhaForteAttribute() : base(Mensagem)
+    {
+    }
+
     public override bool IsValid(object? value)
     {
         if (value is not string senha || senha.Length < 8)

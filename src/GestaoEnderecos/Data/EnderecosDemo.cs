@@ -65,7 +65,7 @@ public static class EnderecosDemo
     private static Endereco N(string cep, string logradouro, string bairro, string cidade, string uf, string numero) =>
         new()
         {
-            Cep = new string([.. cep.Where(char.IsDigit)]),
+            Cep = Models.Cep.Normalizar(cep),
             Logradouro = logradouro,
             Bairro = bairro,
             Cidade = cidade,

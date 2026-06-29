@@ -27,7 +27,7 @@ public class AutenticacaoService
     public async Task<Usuario?> ValidarCredenciaisAsync(
         string login, string senha, CancellationToken ct = default)
     {
-        var loginNormalizado = (login ?? string.Empty).Trim().ToLowerInvariant();
+        var loginNormalizado = UsuarioService.NormalizarLogin(login);
 
         var usuario = await _db.Usuarios
             .FirstOrDefaultAsync(u => u.Login == loginNormalizado, ct);

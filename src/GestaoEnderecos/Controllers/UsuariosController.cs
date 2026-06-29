@@ -1,4 +1,4 @@
-using System.Security.Claims;
+using GestaoEnderecos.Data;
 using GestaoEnderecos.Services;
 using GestaoEnderecos.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -14,8 +14,13 @@ namespace GestaoEnderecos.Controllers;
 public class UsuariosController : Controller
 {
     private readonly UsuarioService _usuarios;
+    private readonly ICurrentUser _currentUser;
 
-    public UsuariosController(UsuarioService usuarios) => _usuarios = usuarios;
+    public UsuariosController(UsuarioService usuarios, ICurrentUser currentUser)
+    {
+        _usuarios = usuarios;
+        _currentUser = currentUser;
+    }
 
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken ct) =>
@@ -126,7 +131,7 @@ public class UsuariosController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {
-        if (id == UsuarioAtualId)
+        if (id == _currentUser.Id)
         {
             TempData["Erro"] = "Você não pode excluir a si mesmo.";
             return RedirectToAction(nameof(Index));
@@ -148,7 +153,4 @@ public class UsuariosController : Controller
         TempData["Sucesso"] = "Usuário excluído.";
         return RedirectToAction(nameof(Index));
     }
-
-    private int UsuarioAtualId =>
-        int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 }

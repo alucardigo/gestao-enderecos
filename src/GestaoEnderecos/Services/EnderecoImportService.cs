@@ -155,7 +155,7 @@ public sealed class EnderecoImportService
     {
         var erros = new List<string>();
 
-        var cep = EnderecoService.NormalizarCep(row.Cep);
+        var cep = Cep.Normalizar(row.Cep);
         if (cep.Length != 8)
         {
             erros.Add("CEP inválido (precisa de 8 dígitos).");

@@ -24,7 +24,7 @@ public class AlterarSenhaViewModel
 
     [Required(ErrorMessage = "Informe a nova senha.")]
     [StringLength(100)]
-    [SenhaForte(ErrorMessage = "A senha deve ter ao menos 8 caracteres, com 3 dos 4 tipos: maiúsculas, minúsculas, números e símbolos.")]
+    [SenhaForte]
     [DataType(DataType.Password)]
     [Display(Name = "Nova senha")]
     public string NovaSenha { get; set; } = string.Empty;

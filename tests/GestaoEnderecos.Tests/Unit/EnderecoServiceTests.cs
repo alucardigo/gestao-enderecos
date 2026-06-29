@@ -16,7 +16,7 @@ public class EnderecoServiceTests
     [InlineData(null, "")]
     public void NormalizarCep_remove_mascara_e_deixa_apenas_digitos(string? entrada, string esperado)
     {
-        Assert.Equal(esperado, EnderecoService.NormalizarCep(entrada));
+        Assert.Equal(esperado, Cep.Normalizar(entrada));
     }
 
     [Fact]

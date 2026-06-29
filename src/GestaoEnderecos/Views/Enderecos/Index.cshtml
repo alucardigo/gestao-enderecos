@@ -4,14 +4,6 @@
     var temBusca = !string.IsNullOrEmpty(Model.Busca);
 }
 
-@if (TempData["Sucesso"] is string sucesso)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        @sucesso
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
-    </div>
-}
-
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <h1 class="h3 mb-0">Seus endereços</h1>
     <div class="d-flex gap-2">
@@ -70,7 +62,7 @@ else
                 @foreach (var e in Model.Itens)
                 {
                     <tr>
-                        <td>@FormatarCep(e.Cep)</td>
+                        <td>@Cep.Formatar(e.Cep)</td>
                         <td>@e.Logradouro</td>
                         <td>@e.Numero</td>
                         <td>@e.Complemento</td>
@@ -81,7 +73,7 @@ else
                             <a asp-action="Edit" asp-route-id="@e.Id" class="btn btn-sm btn-outline-primary">Editar</a>
                             <button type="button" class="btn btn-sm btn-outline-danger"
                                     data-bs-toggle="modal" data-bs-target="#modalExcluir"
-                                    data-id="@e.Id" data-descricao="@e.Logradouro, @e.Numero">
+                                    data-id="@e.Id" data-label="@e.Logradouro, @e.Numero">
                                 Excluir
                             </button>
                         </td>
@@ -113,16 +105,16 @@ else
     </div>
 }
 
-<div class="modal fade" id="modalExcluir" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalExcluir" tabindex="-1" aria-hidden="true" data-delete-modal>
     <div class="modal-dialog">
         <div class="modal-content">
-            <form id="formExcluir" method="post" asp-action="Delete">
+            <form method="post" asp-action="Delete" data-delete-action="@Url.Action("Delete")">
                 <div class="modal-header">
                     <h5 class="modal-title">Excluir endereço</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                 </div>
                 <div class="modal-body">
-                    Tem certeza que deseja excluir <strong id="descExcluir"></strong>?
+                    Tem certeza que deseja excluir <strong data-delete-target></strong>?
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -132,20 +124,3 @@ else
         </div>
     </div>
 </div>
-
-@functions {
-    private static string FormatarCep(string? cep) =>
-        cep is { Length: 8 } ? $"{cep[..5]}-{cep[5..]}" : cep ?? string.Empty;
-}
-
-@section Scripts {
-    <script>
-        const modalExcluir = document.getElementById('modalExcluir');
-        modalExcluir?.addEventListener('show.bs.modal', function (event) {
-            const botao = event.relatedTarget;
-            document.getElementById('descExcluir').textContent = botao.getAttribute('data-descricao');
-            document.getElementById('formExcluir').action =
-                '@Url.Action("Delete")/' + botao.getAttribute('data-id');
-        });
-    </script>
-}

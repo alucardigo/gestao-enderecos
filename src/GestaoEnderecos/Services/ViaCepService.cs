@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using GestaoEnderecos.Models;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace GestaoEnderecos.Services;
@@ -24,7 +25,7 @@ public sealed class ViaCepService : IViaCepService
 
     public async Task<EnderecoViaCep?> BuscarAsync(string cep, CancellationToken ct = default)
     {
-        var digitos = EnderecoService.NormalizarCep(cep);
+        var digitos = Cep.Normalizar(cep);
         if (digitos.Length != 8)
         {
             return null;

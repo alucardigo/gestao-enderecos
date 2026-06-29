@@ -15,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 // MVC + acesso ao HttpContext (necessário para o filtro global por usuário).
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddMemoryCache(); // cache em memória (ex.: respostas do ViaCEP)
+builder.Services.AddMemoryCache(); // usado pelo ViaCepService
 
 // Permite que acentos do português saiam como UTF-8 no HTML, em vez de entidades numéricas.
 builder.Services.Configure<WebEncoderOptions>(options =>

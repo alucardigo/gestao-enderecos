@@ -19,5 +19,5 @@ public class Usuario
     /// <summary>Indica se o usuário é administrador (acesso à gestão de usuários).</summary>
     public bool IsAdmin { get; set; }
 
-    public ICollection<Endereco> Enderecos { get; set; } = new List<Endereco>();
+    public ICollection<Endereco> Enderecos { get; } = [];
 }

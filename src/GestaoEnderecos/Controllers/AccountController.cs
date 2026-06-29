@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using GestaoEnderecos.Data;
 using GestaoEnderecos.Models;
 using GestaoEnderecos.Services;
 using GestaoEnderecos.ViewModels;
@@ -15,11 +16,13 @@ public class AccountController : Controller
 {
     private readonly AutenticacaoService _auth;
     private readonly UsuarioService _usuarios;
+    private readonly ICurrentUser _currentUser;
 
-    public AccountController(AutenticacaoService auth, UsuarioService usuarios)
+    public AccountController(AutenticacaoService auth, UsuarioService usuarios, ICurrentUser currentUser)
     {
         _auth = auth;
         _usuarios = usuarios;
+        _currentUser = currentUser;
     }
 
     [HttpGet]
@@ -73,7 +76,7 @@ public class AccountController : Controller
     [HttpGet]
     public async Task<IActionResult> Perfil(CancellationToken ct)
     {
-        var usuario = await _usuarios.ObterAsync(UsuarioAtualId, ct);
+        var usuario = await _usuarios.ObterAsync(_currentUser.Id, ct);
         if (usuario is null)
         {
             return NotFound();
@@ -92,10 +95,10 @@ public class AccountController : Controller
             return View(model);
         }
 
-        await _usuarios.AtualizarPerfilAsync(UsuarioAtualId, model.Nome, ct);
+        await _usuarios.AtualizarPerfilAsync(_currentUser.Id, model.Nome, ct);
 
         // Atualiza a claim de nome para o menu refletir o novo nome imediatamente.
-        var usuario = await _usuarios.ObterAsync(UsuarioAtualId, ct);
+        var usuario = await _usuarios.ObterAsync(_currentUser.Id, ct);
         if (usuario is not null)
         {
             await SignInAsync(usuario, isPersistent: false);
@@ -119,7 +122,7 @@ public class AccountController : Controller
             return View(model);
         }
 
-        var ok = await _usuarios.AlterarSenhaAsync(UsuarioAtualId, model.SenhaAtual, model.NovaSenha, ct);
+        var ok = await _usuarios.AlterarSenhaAsync(_currentUser.Id, model.SenhaAtual, model.NovaSenha, ct);
         if (!ok)
         {
             ModelState.AddModelError(nameof(model.SenhaAtual), "Senha atual incorreta.");
@@ -129,9 +132,6 @@ public class AccountController : Controller
         TempData["Sucesso"] = "Senha alterada com sucesso.";
         return RedirectToAction(nameof(Perfil));
     }
-
-    private int UsuarioAtualId =>
-        int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     private async Task SignInAsync(Usuario usuario, bool isPersistent)
     {
