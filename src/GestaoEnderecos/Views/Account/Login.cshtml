@@ -1,0 +1,54 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Entrar";
+    var temErroGeral = ViewData.ModelState.ContainsKey(string.Empty)
+        && ViewData.ModelState[string.Empty]!.Errors.Count > 0;
+}
+
+<div class="row justify-content-center mt-4 mt-md-5">
+    <div class="col-12 col-sm-9 col-md-6 col-lg-5 col-xl-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4 p-md-5">
+                <h1 class="h4 mb-1 text-center">Bem-vindo</h1>
+                <p class="text-muted text-center small mb-4">Acesse para gerenciar seus endereços</p>
+
+                <form asp-action="Login" method="post">
+                    <input type="hidden" asp-for="ReturnUrl" />
+
+                    @if (temErroGeral)
+                    {
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small" role="alert"></div>
+                    }
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Login" class="form-control" placeholder="usuário" autocomplete="username" autofocus />
+                        <label asp-for="Login"></label>
+                        <span asp-validation-for="Login" class="text-danger small"></span>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Senha" class="form-control" placeholder="senha" autocomplete="current-password" />
+                        <label asp-for="Senha"></label>
+                        <span asp-validation-for="Senha" class="text-danger small"></span>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input asp-for="LembrarMe" class="form-check-input" />
+                        <label asp-for="LembrarMe" class="form-check-label small"></label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Entrar</button>
+                </form>
+
+                <div class="alert alert-secondary small mt-4 mb-0">
+                    <strong>Demonstração:</strong>
+                    usuário <code>ana</code> ou <code>bruno</code>, senha <code>Senha@@123</code>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
